@@ -163,7 +163,7 @@ public class EventBus {
 
     /**
      * Like {@link #register(Object)}, but also triggers delivery of the most recent sticky event (posted with
-     * {@link #postSticky(Object)}) to the given subscriber.
+     * {@link #postSticky(Parcelable, Context)}) to the given subscriber.
      */
     public void registerSticky(Object subscriber) {
         register(subscriber, true, 0);
@@ -171,7 +171,7 @@ public class EventBus {
 
     /**
      * Like {@link #register(Object, int)}, but also triggers delivery of the most recent sticky event (posted with
-     * {@link #postSticky(Object)}) to the given subscriber.
+     * {@link #postSticky(Parcelable, Context)}) to the given subscriber.
      */
     public void registerSticky(Object subscriber, int priority) {
         register(subscriber, true, priority);
@@ -236,7 +236,7 @@ public class EventBus {
     }
 
     /** Only updates subscriptionsByEventType, not typesBySubscriber! Caller must update typesBySubscriber. */
-    private void unubscribeByEventType(Object subscriber, Class<?> eventType) {
+    private void unubscribeByEventType(Object subscriber, Class<?> eventType) {//TODO send command via Google Play Services
         List<Subscription> subscriptions = subscriptionsByEventType.get(eventType);
         if (subscriptions != null) {
             int size = subscriptions.size();
@@ -253,7 +253,7 @@ public class EventBus {
     }
 
     /** Unregisters the given subscriber from all event classes. */
-    public synchronized void unregister(Object subscriber) {
+    public synchronized void unregister(Object subscriber) {//TODO send command via Google Play Services
         List<Class<?>> subscribedTypes = typesBySubscriber.get(subscriber);
         if (subscribedTypes != null) {
             for (Class<?> eventType : subscribedTypes) {
@@ -281,7 +281,7 @@ public class EventBus {
                 while (!eventQueue.isEmpty()) {
                     Parcelable obj = (Parcelable) eventQueue.remove(0);
                     postSingleEvent(obj, postingState);
-                    new SendToDataLayerThread(obj, context).start();
+                    new SendToDataLayerThread(obj, context, false).start();
                 }
             } finally {
                 postingState.isPosting = false;
@@ -328,7 +328,30 @@ public class EventBus {
             try {
                 while (!eventQueue.isEmpty()) {
                     Parcelable obj = (Parcelable) eventQueue.remove(0);
-                    new SendToDataLayerThread(obj, context).start();
+                    new SendToDataLayerThread(obj, context, false).start();
+                }
+            } finally {
+                postingState.isPosting = false;
+                postingState.isMainThread = false;
+            }
+        }
+    }
+
+    private void postRemote(Parcelable event, Context context, boolean isSticky) {
+        PostingThreadState postingState = currentPostingThreadState.get();
+        List<Object> eventQueue = postingState.eventQueue;
+        eventQueue.add(event);
+
+        if (!postingState.isPosting) {
+            postingState.isMainThread = Looper.getMainLooper() == Looper.myLooper();
+            postingState.isPosting = true;
+            if (postingState.canceled) {
+                throw new EventBusException("Internal error. Abort state was not reset");
+            }
+            try {
+                while (!eventQueue.isEmpty()) {
+                    Parcelable obj = (Parcelable) eventQueue.remove(0);
+                    new SendToDataLayerThread(obj, context, isSticky).start();
                 }
             } finally {
                 postingState.isPosting = false;
@@ -344,7 +367,7 @@ public class EventBus {
      * {@link #register(Object, int)}). Canceling is restricted to event handling methods running in posting thread
      * {@link ThreadMode#PostThread}.
      */
-    public void cancelEventDelivery(Object event) {
+    public void cancelEventDelivery(Object event) {//TODO send command via Google Play Services
         PostingThreadState postingState = currentPostingThreadState.get();
         if (!postingState.isPosting) {
             throw new EventBusException(
@@ -365,7 +388,24 @@ public class EventBus {
      * event of an event's type is kept in memory for future access. This can be {@link #registerSticky(Object)} or
      * {@link #getStickyEvent(Class)}.
      */
-    public void postSticky(Object event) {
+    public void postSticky(Parcelable event, Context context) {
+        synchronized (stickyEvents) {
+            stickyEvents.put(event.getClass(), event);
+        }
+        // Should be posted after it is putted, in case the subscriber wants to remove immediately
+        postLocal(event);
+        postRemote(event, context, true);
+    }
+
+    public void postStickyRemote(Parcelable event, Context context) {
+        synchronized (stickyEvents) {
+            stickyEvents.put(event.getClass(), event);
+        }
+        // Should be posted after it is putted, in case the subscriber wants to remove immediately
+        postRemote(event, context, true);
+    }
+
+    public void postStickyLocal(Object event) {
         synchronized (stickyEvents) {
             stickyEvents.put(event.getClass(), event);
         }
@@ -376,7 +416,7 @@ public class EventBus {
     /**
      * Gets the most recent sticky event for the given type.
      *
-     * @see #postSticky(Object)
+     * @see #postSticky(android.os.Parcelable, Context)
      */
     public <T> T getStickyEvent(Class<T> eventType) {
         synchronized (stickyEvents) {
@@ -387,9 +427,9 @@ public class EventBus {
     /**
      * Remove and gets the recent sticky event for the given event type.
      *
-     * @see #postSticky(Object)
+     * @see #postSticky(Parcelable, Context)
      */
-    public <T> T removeStickyEvent(Class<T> eventType) {
+    public <T> T removeStickyEvent(Class<T> eventType) {//TODO send command via Google Play Services
         synchronized (stickyEvents) {
             return eventType.cast(stickyEvents.remove(eventType));
         }
@@ -400,7 +440,7 @@ public class EventBus {
      *
      * @return true if the events matched and the sticky event was removed.
      */
-    public boolean removeStickyEvent(Object event) {
+    public boolean removeStickyEvent(Object event) {//TODO send command via Google Play Services
         synchronized (stickyEvents) {
             Class<?> eventType = event.getClass();
             Object existingEvent = stickyEvents.get(eventType);
@@ -416,7 +456,7 @@ public class EventBus {
     /**
      * Removes all sticky events.
      */
-    public void removeAllStickyEvents() {
+    public void removeAllStickyEvents() {//TODO send command via Google Play Services
         synchronized (stickyEvents) {
             stickyEvents.clear();
         }
@@ -647,24 +687,33 @@ public class EventBus {
     }
 
     class SendToDataLayerThread extends Thread {
-        Parcelable object;
-        Context context;
+        private Parcelable object;
+        private Context context;
+        private boolean sticky;
 
-        SendToDataLayerThread(Parcelable parcelable, Context ctx) {
-            object = parcelable;
+        SendToDataLayerThread(Parcelable obj, Context ctx, boolean isSticky) {
+            object = obj;
             context = ctx;
+            sticky = isSticky;
         }
 
         public void run() {
+            byte[] objectArr = WearBusTools.parcelToByte(object);
+            if((objectArr.length/1024) > 100){
+                throw new RuntimeException("Object is too big to push it via Google Play Services");
+            }
             GoogleApiClient googleApiClient = getInstance(context);
             googleApiClient.blockingConnect(CONNECTION_TIME_OUT_MS, TimeUnit.MILLISECONDS);
             NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient).await();
             for (com.google.android.gms.wearable.Node node : nodes.getNodes()) {
-                MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + object.getClass().getName() , WearBusTools.parcelToByte(object)).await();
-                if (result.getStatus().isSuccess()) {
-                    Log.v(TAG, "Message: {" + object.toString() + "} sent to: " + node.getDisplayName());
+                MessageApi.SendMessageResult result;
+                if(sticky) {
+                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + object.getClass().getName() , objectArr).await();
                 } else {
-                    Log.v(TAG, "ERROR: failed to send Message");
+                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + object.getClass().getName() , objectArr).await();
+                }
+                if (!result.getStatus().isSuccess()) {
+                    Log.v(TAG, "ERROR: failed to send Message via Google Play Services");
                 }
             }
         }
@@ -672,6 +721,7 @@ public class EventBus {
 
     /** Unparcelable object and post it to local bus to keep it in the "pipe"  */
     public static void syncEvent(MessageEvent messageEvent){
+        //catch events
         if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
             String className =  messageEvent.getPath().replace(WearBusTools.MESSAGE_PATH, "");
             for (Class classTmp : classList) {
@@ -680,6 +730,22 @@ public class EventBus {
                     try {
                         Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
                         EventBus.getDefault().postLocal(obj);
+                        //send them to local bus
+                    } catch (Exception e) {
+                        Log.d(TAG, "syncEvent error: " + e.getMessage());
+                    }
+                }
+            }
+        } else if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY)) {
+            //Catch sticky events
+            String className =  messageEvent.getPath().replace(WearBusTools.MESSAGE_PATH_STICKY, "");
+            for (Class classTmp : classList) {
+                String classNameParts = classTmp.getName().substring(classTmp.getName().lastIndexOf(".") + 1);
+                if (className.equals(classNameParts)) {
+                    try {
+                        Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
+                        EventBus.getDefault().postStickyLocal(obj);
+                        //send them to local bus
                     } catch (Exception e) {
                         Log.d(TAG, "syncEvent error: " + e.getMessage());
                     }
