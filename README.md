@@ -2,9 +2,15 @@ BusWear - EventBus for Android Wear
 =======
 ![BusWear logo](https://raw.githubusercontent.com/tajchert/BusWear/master/mobile/src/main/res/drawable-xxxhdpi/ic_launcher.png)
 
-BusWear is simple library of EventBus to support Android Wear devices. Just adding one line of code lets you get synchronized event buses on Wear and mobile platform.
+BusWear is a simple library for EventBus to support Android Wear devices. Just adding one line of code lets you get synchronized event buses on Wear and mobile platform.
 
 ![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/diagram.png)
+
+##What is EventBus?
+
+A great multi-purpose tool for Android apps, great way of triggering some events in separate Activity, Fragment, Service etc.
+
+[EventBus, origin of that project](https://github.com/greenrobot/EventBus) or [Otto](https://github.com/square/otto).
 
 ##Usage
 To start with BusWear you need to add `EventBus.syncEvent(messageEvent);` in your `onMessageReceived()` method, both in mobile and wear projects. If you don't have one add a new Service such as:
