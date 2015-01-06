@@ -51,6 +51,10 @@ public class MainMobileActivity extends ActionBarActivity {
         });
     }
 
+    /**
+     * It receives events from event bus, also from Wear device if it send everywhere or remote.
+     * @param customObject
+     */
     public void onEvent(CustomObject customObject) {
         Toast.makeText(MainMobileActivity.this, "Received: " + customObject.getName(), Toast.LENGTH_SHORT).show();
     }

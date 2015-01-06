@@ -18,12 +18,14 @@ package pl.tajchert.buswear;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
@@ -61,6 +63,7 @@ public class EventBus {
     private final Map<Class<?>, CopyOnWriteArrayList<Subscription>> subscriptionsByEventType;
     private final Map<Object, List<Class<?>>> typesBySubscriber;
     private final Map<Class<?>, Object> stickyEvents;
+    private static ArrayList<Class<?>> classList = new ArrayList<>();
 
     private final ThreadLocal<PostingThreadState> currentPostingThreadState = new ThreadLocal<PostingThreadState>() {
         @Override
@@ -184,6 +187,7 @@ public class EventBus {
     // Must be called in synchronized block
     private void subscribe(Object subscriber, SubscriberMethod subscriberMethod, boolean sticky, int priority) {
         Class<?> eventType = subscriberMethod.eventType;
+        classList.add(eventType);
         CopyOnWriteArrayList<Subscription> subscriptions = subscriptionsByEventType.get(eventType);
         Subscription newSubscription = new Subscription(subscriber, subscriberMethod, priority);
         if (subscriptions == null) {
@@ -261,7 +265,7 @@ public class EventBus {
         }
     }
 
-    /** Posts the given event to the event bus. */
+    /** Posts the given event to the event bus, also send it to Wear device */
     public void post(Parcelable event, Context context) {
         PostingThreadState postingState = currentPostingThreadState.get();
         List<Object> eventQueue = postingState.eventQueue;
@@ -286,6 +290,7 @@ public class EventBus {
         }
     }
 
+    /** Posts the given event to the local event bus  */
     public void postLocal(Object event) {
         PostingThreadState postingState = currentPostingThreadState.get();
         List<Object> eventQueue = postingState.eventQueue;
@@ -308,6 +313,7 @@ public class EventBus {
         }
     }
 
+    /** Posts the given event to the remote event bus  */
     public void postRemote(Parcelable event, Context context) {
         PostingThreadState postingState = currentPostingThreadState.get();
         List<Object> eventQueue = postingState.eventQueue;
@@ -659,6 +665,24 @@ public class EventBus {
                     Log.v(TAG, "Message: {" + object.toString() + "} sent to: " + node.getDisplayName());
                 } else {
                     Log.v(TAG, "ERROR: failed to send Message");
+                }
+            }
+        }
+    }
+
+    /** Unparcelable object and post it to local bus to keep it in the "pipe"  */
+    public static void syncEvent(MessageEvent messageEvent){
+        if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
+            String className =  messageEvent.getPath().replace(WearBusTools.MESSAGE_PATH, "");
+            for (Class classTmp : classList) {
+                String classNameParts = classTmp.getName().substring(classTmp.getName().lastIndexOf(".") + 1);
+                if (className.equals(classNameParts)) {
+                    try {
+                        Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
+                        EventBus.getDefault().postLocal(obj);
+                    } catch (Exception e) {
+                        Log.d(TAG, "syncEvent error: " + e.getMessage());
+                    }
                 }
             }
         }
