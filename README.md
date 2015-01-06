@@ -2,7 +2,7 @@ BusWear - EventBus for Android Wear
 =======
 ![BusWear logo](https://raw.githubusercontent.com/tajchert/BusWear/master/mobile/src/main/res/drawable-xxxhdpi/ic_launcher.png)
 
-BusWear is a simple library for EventBus to support Android Wear devices. Just adding one line of code lets you get synchronized event buses on Wear and mobile platform.
+BusWear is a simple library for Event :bus: to support Android Wear devices. Just adding one line of code lets you get synchronized event buses on Wear and mobile platform.
 
 ![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/diagram.png)
 
