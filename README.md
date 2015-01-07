@@ -55,6 +55,27 @@ You can post to remote branch as long as it `implements Parcelable`, other "non-
 The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLocal()`, `postStickyRemote()`. However not all "sticky" functionality is supported yet - ex. `removeStickyEvent()` is not implemented (TODO), and works only locally.
 
 
+###Sample
+
+To send:
+
+`EventBus.getDefault().post(parcelableObject, this);`
+
+To receive:
+```
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    //...
+    EventBus.getDefault().register(this);
+}
+
+//Called every time when post() is ParcelableObject as an object
+public void onEvent(ParcelableObject parcelableObject){
+    //Do your stuff with that object
+}
+```
+
+
 ###Questions?
 
 **Why does it uses whole code of EventBus instead of "extends EventBus"?**
