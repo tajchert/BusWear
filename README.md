@@ -1,5 +1,8 @@
 BusWear - EventBus for Android Wear
 =======
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/pl.tajchert/buswear/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/pl.tajchert/buswear)
+
 ![BusWear logo](https://raw.githubusercontent.com/tajchert/BusWear/master/mobile/src/main/res/drawable-xxxhdpi/ic_launcher.png)
 
 BusWear (:bus::watch:) is a simple library for EventBus to support Android Wear devices. Just adding one line of code lets you get synchronized event buses on Wear and mobile platform.
@@ -34,6 +37,26 @@ And define it in your `Manifest.xml` file:
 If you don't do this events will be send from device but other will not receive it.
 
 This is all you need to do to start sending objects back and forth!
+
+###Add BusWear to your project
+
+BusWear is available on Maven Central.
+
+Gradle:
+```
+    compile 'pl.tajchert:buswear:0.9.0'
+```
+
+Maven:
+```
+<dependency>
+    <groupId>pl.tajchert</groupId>
+    <artifactId>buswear</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```
+
+[Maven Central Link](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22pl.tajchert%22%20AND%20a%3A%22buswear%22)
 
 ###Lets start posting!
 
