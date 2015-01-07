@@ -70,10 +70,6 @@ The same goes for Sticky events - so you get `postSticky()`, `postStickyLocal()`
 
 ###Questions?
 
-**Will it be on the Maven?**
-
-_Yes, it is matter of days._
-
 **Why does it uses whole code of EventBus instead of "extends EventBus"?**
 
 _As it overrides some private methods to get for example subscribed method classes of parameters for unparcelling objects after receiving them in Parcel. If that problem will be resolved I will be glad to use less EventBus as dependency._
