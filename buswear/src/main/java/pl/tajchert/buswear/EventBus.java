@@ -739,9 +739,9 @@ public class EventBus {
     public static void syncEvent(MessageEvent messageEvent){
         //catch events
         if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
-            String className =  messageEvent.getPath().replace(WearBusTools.MESSAGE_PATH, "");
+            String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
             for (Class classTmp : classList) {
-                if (className.equals(classTmp.getName())) {
+                if (className.equals(classTmp.getSimpleName())) {
                     try {
                         Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
                         EventBus.getDefault().postLocal(obj);
@@ -753,9 +753,9 @@ public class EventBus {
             }
         } else if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY)) {
             //Catch sticky events
-            String className =  messageEvent.getPath().replace(WearBusTools.MESSAGE_PATH_STICKY, "");
+            String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
             for (Class classTmp : classList) {
-                if (className.equals(classTmp.getName())) {
+                if (className.equals(classTmp.getSimpleName())) {
                     try {
                         Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
                         EventBus.getDefault().postStickyLocal(obj);
