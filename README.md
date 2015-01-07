@@ -24,13 +24,13 @@ To start with BusWear all you need is to add a dependency. That is it!
 BusWear is available on Maven Central.
 
 Gradle:
-```
+```gradle
     compile 'pl.tajchert:buswear:0.9.3'
     compile 'com.google.android.gms:play-services-wearable:+'
 ```
 
 Maven:
-```
+```xml
 <dependency>
     <groupId>pl.tajchert</groupId>
     <artifactId>buswear</artifactId>
@@ -59,10 +59,12 @@ The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLoca
 
 To send:
 
-`EventBus.getDefault().post(parcelableObject, this);`
+```java
+EventBus.getDefault().post(parcelableObject, this);
+```
 
 To receive:
-```
+```java
 @Override
 protected void onCreate(Bundle savedInstanceState) {
     //...
