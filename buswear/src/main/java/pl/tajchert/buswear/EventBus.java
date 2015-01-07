@@ -188,7 +188,9 @@ public class EventBus {
     // Must be called in synchronized block
     private void subscribe(Object subscriber, SubscriberMethod subscriberMethod, boolean sticky, int priority) {
         Class<?> eventType = subscriberMethod.eventType;
-        classList.add(eventType);
+        if(!classList.contains(eventType)){
+            classList.add(eventType);
+        }
         CopyOnWriteArrayList<Subscription> subscriptions = subscriptionsByEventType.get(eventType);
         Subscription newSubscription = new Subscription(subscriber, subscriberMethod, priority);
         if (subscriptions == null) {
@@ -280,9 +282,22 @@ public class EventBus {
             }
             try {
                 while (!eventQueue.isEmpty()) {
-                    Parcelable obj = (Parcelable) eventQueue.remove(0);
-                    postSingleEvent(obj, postingState);
-                    new SendToDataLayerThread(obj, context, false).start();
+                    Object obj = eventQueue.remove(0);
+                    if(obj instanceof NoSubscriberEvent){
+                        postSingleEvent(obj, postingState);
+                    } else {
+                        try {
+                            Parcelable objParcelable = (Parcelable) obj;
+                            new SendToDataLayerThread(objParcelable, context, false).start();
+                        } catch (Exception e) {
+                            if (logNoSubscriberMessages) {
+                                Log.e(TAG, "Object cannot be send as is not Parcelable.");
+                            }
+                        }
+                    }
+                    if(obj != null){
+                        postSingleEvent(obj, postingState);
+                    }
                 }
             } finally {
                 postingState.isPosting = false;
@@ -494,9 +509,9 @@ public class EventBus {
         } else {
             subscriptionFound = postSingleEventForEventType(event, postingState, eventClass);
         }
-        if (!subscriptionFound) {
+        if (!subscriptionFound && !(event instanceof NoSubscriberEvent)) {
             if (logNoSubscriberMessages) {
-                Log.d(TAG, "No subscribers registered for event " + eventClass);
+                Log.d(TAG, "No local subscribers registered for event " + eventClass);
             }
             if (sendNoSubscriberEvent && eventClass != NoSubscriberEvent.class &&
                     eventClass != SubscriberExceptionEvent.class) {
@@ -666,18 +681,18 @@ public class EventBus {
                     .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                         @Override
                         public void onConnected(Bundle connectionHint) {
-                            Log.d(TAG, "onConnected: " + connectionHint);
+                            Log.d(TAG, "onConnected");
                             // Now you can use the Data Layer API
                         }
                         @Override
                         public void onConnectionSuspended(int cause) {
-                            Log.d(TAG, "onConnectionSuspended: " + cause);
+                            Log.d(TAG, "onConnectionSuspended");
                         }
                     })
                     .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
                         @Override
                         public void onConnectionFailed(ConnectionResult result) {
-                            Log.d(TAG, "onConnectionFailed: " + result);
+                            Log.d(TAG, "onConnectionFailed");
                         }
                     })
                             // Request access only to the Wearable API
