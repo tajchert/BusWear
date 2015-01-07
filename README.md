@@ -26,6 +26,7 @@ BusWear is available on Maven Central.
 Gradle:
 ```
     compile 'pl.tajchert:buswear:0.9.2'
+    compile 'com.google.android.gms:play-services-wearable:+'
 ```
 
 Maven:
