@@ -656,7 +656,7 @@ public class EventBus {
         void onPostCompleted(List<SubscriberExceptionEvent> exceptionEvents);
     }
 
-    public GoogleApiClient getInstance (Context context) {
+    private GoogleApiClient getInstance (Context context) {
         if(mGoogleApiClient == null) {
             if(context == null) {
                 return null;
@@ -686,7 +686,7 @@ public class EventBus {
         return mGoogleApiClient;
     }
 
-    class SendToDataLayerThread extends Thread {
+    private class SendToDataLayerThread extends Thread {
         private Parcelable object;
         private Context context;
         private boolean sticky;
@@ -725,8 +725,7 @@ public class EventBus {
         if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
             String className =  messageEvent.getPath().replace(WearBusTools.MESSAGE_PATH, "");
             for (Class classTmp : classList) {
-                String classNameParts = classTmp.getName().substring(classTmp.getName().lastIndexOf(".") + 1);
-                if (className.equals(classNameParts)) {
+                if (className.equals(classTmp.getName())) {
                     try {
                         Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
                         EventBus.getDefault().postLocal(obj);
@@ -740,8 +739,7 @@ public class EventBus {
             //Catch sticky events
             String className =  messageEvent.getPath().replace(WearBusTools.MESSAGE_PATH_STICKY, "");
             for (Class classTmp : classList) {
-                String classNameParts = classTmp.getName().substring(classTmp.getName().lastIndexOf(".") + 1);
-                if (className.equals(classNameParts)) {
+                if (className.equals(classTmp.getName())) {
                     try {
                         Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
                         EventBus.getDefault().postStickyLocal(obj);
