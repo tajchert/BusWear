@@ -16,27 +16,8 @@ A great multi-purpose tool for Android apps, great way of triggering some events
 [EventBus, origin of that project](https://github.com/greenrobot/EventBus) or [Otto](https://github.com/square/otto).
 
 ##Usage
-To start with BusWear you need to add `EventBus.syncEvent(messageEvent);` in your `onMessageReceived()` method, both in mobile and wear projects. If you don't have one add a new Service such as:
-```java
-public class MessagesCatcher extends WearableListenerService {
-    @Override
-    public void onMessageReceived(MessageEvent messageEvent) {
-        EventBus.syncEvent(messageEvent);
-    }
-}
-```
-And define it in your `Manifest.xml` file:
-```xml
-<service android:name=".MessagesCatcher">
-  <intent-filter>
-    <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
-  </intent-filter>
-</service>
-```
 
-If you don't do this events will be send from device but other will not receive it.
-
-This is all you need to do to start sending objects back and forth!
+To start with BusWear all you need is to add a dependency. That is it!
 
 ###Add BusWear to your project
 
@@ -44,7 +25,7 @@ BusWear is available on Maven Central.
 
 Gradle:
 ```
-    compile 'pl.tajchert:buswear:0.9.0'
+    compile 'pl.tajchert:buswear:0.9.2'
 ```
 
 Maven:
@@ -52,7 +33,7 @@ Maven:
 <dependency>
     <groupId>pl.tajchert</groupId>
     <artifactId>buswear</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.2</version>
 </dependency>
 ```
 
@@ -84,5 +65,4 @@ BusWear binaries and source code can be used according to the [Apache License, V
 
 ###Thanks
 
-Goes to [Polidea](https://www.polidea.com/) for putting me on a project that make me do that library, Dariusz Seweryn for idea with Class name in path String.
-
+Goes to [Polidea](https://www.polidea.com/) for putting me on a project that make me do that library, Maciej Górski for Manifest merger, and Dariusz Seweryn for idea with Class name in path String.
