@@ -13,6 +13,11 @@ android {
     compileSdkVersion 21
     buildToolsVersion "21.1.1"
 
+    defaultConfig {
+        minSdkVersion 4
+    }
+
+
     buildTypes {
         release {
             minifyEnabled false
@@ -23,7 +28,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    provided 'com.google.android.gms:play-services:6.1.71'
+    provided 'com.google.android.gms:play-services:6.5.87'
 }
 
 apply from: 'maven-push.gradle'
