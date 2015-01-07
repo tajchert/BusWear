@@ -76,10 +76,13 @@ _As it overrides some private methods to get for example subscribed method class
 
 **What are some drawbacks?**
 
-_Probably quite big one is that all your objects to be posted needs to implement `Parcelable`. I recommend using for that purpose some library such as Parceler or Auto-Parcel for this._
+_Probably quite big one is that all your objects to be posted needs to implement `Parcelable`. I recommend using for that purpose some library such as Parceler, Hrisey or Auto-Parcel for this._
 
 ###License
 
 BusWear binaries and source code can be used according to the [Apache License, Version 2.0](LICENSE).
 
+###Thanks
+
+Goes to [Polidea](https://www.polidea.com/) for putting me on a project that make me do that library, Dariusz Seweryn for idea with Class name in path String.
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Markus Junginger, greenrobot (http://greenrobot.de)
+ * Copyright (C) 2015 Michal Tajchert (http://tajchert.pl), Polidea
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ import pl.tajchert.buswear.util.WearBusTools;
  * subscribers receive events until {@link #unregister(Object)} is called. By convention, event handling methods must
  * be named "onEvent", be public, return nothing (void), and have exactly one parameter (the event).
  *
- * @author Markus Junginger, greenrobot
+ *@author Michal Tajchert, Polidea
+ * Author of EventBus (90% of that code) Markus Junginger, greenrobot
  */
 public class EventBus {
 
