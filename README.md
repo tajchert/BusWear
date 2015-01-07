@@ -25,7 +25,7 @@ BusWear is available on Maven Central.
 
 Gradle:
 ```
-    compile 'pl.tajchert:buswear:0.9.2'
+    compile 'pl.tajchert:buswear:0.9.3'
     compile 'com.google.android.gms:play-services-wearable:+'
 ```
 
@@ -34,7 +34,7 @@ Maven:
 <dependency>
     <groupId>pl.tajchert</groupId>
     <artifactId>buswear</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
 </dependency>
 ```
 
@@ -52,7 +52,7 @@ You can post to remote branch as long as it `implements Parcelable`, other "non-
 
 `postRemote(parcelableObject, context)` sends your parcelable object to remote bus only.
 
-The same goes for Sticky events - so you get `postSticky()`, `postStickyLocal()`, `postStickyRemote()`. However not all "sticky" functionality is supported yet - ex. `removeStickyEvent()` is not implemented (TODO), and works only locally.
+The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLocal()`, `postStickyRemote()`. However not all "sticky" functionality is supported yet - ex. `removeStickyEvent()` is not implemented (TODO), and works only locally.
 
 
 ###Questions?
@@ -64,6 +64,8 @@ _As it overrides some private methods to get for example subscribed method class
 **What are some drawbacks?**
 
 _Probably quite big one is that all your objects to be posted needs to implement `Parcelable`. I recommend using for that purpose some library such as Parceler, Hrisey or Auto-Parcel for this._
+
+_Other one is that you cannot have classes with same name in the same module (for example "wear") - it will lead to errors as matching is done on SimpleName of class._
 
 ###License
 
