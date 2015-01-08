@@ -60,13 +60,15 @@ The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLoca
 To send:
 
 ```java
-EventBus.getDefault().post(parcelableObject, this);
+EventBus.getDefault().post(parcelableObject, this);     //Custom parcelable object
+EventBus.getDefault().post("text", this);               //String
+EventBus.getDefault().post(1.0f, this);                 //Float
+//... similar with Integer, Long etc.
 ```
 
 To receive:
 ```java
 protected void onCreate(Bundle savedInstanceState) {
-    //...
     EventBus.getDefault().register(this);
 }
 
@@ -74,9 +76,12 @@ protected void onCreate(Bundle savedInstanceState) {
 public void onEvent(ParcelableObject parcelableObject){
     //Do your stuff with that object
 }
+
 public void onEvent(String text){
     //Do your stuff with that object
 }
+
+//... more onEvent() if you want!
 ```
 
 
