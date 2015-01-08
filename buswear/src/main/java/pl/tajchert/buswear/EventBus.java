@@ -29,7 +29,9 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -268,8 +270,12 @@ public class EventBus {
         }
     }
 
-    /** Posts the given event to the event bus, also send it to Wear device */
-    public void post(Parcelable event, Context context) {
+    /**
+     * Posts the given event (object) to the event bus, also send it to connected Wear device
+     * @param event needs to be Parcelable or Integer, Long, Float, Double, Short.
+     * @param context for sending object
+     */
+    public void post(Object event, Context context) {
         PostingThreadState postingState = currentPostingThreadState.get();
         List<Object> eventQueue = postingState.eventQueue;
         eventQueue.add(event);
@@ -283,20 +289,20 @@ public class EventBus {
             try {
                 while (!eventQueue.isEmpty()) {
                     Object obj = eventQueue.remove(0);
-                    if(obj instanceof NoSubscriberEvent){
+                    if(obj != null){
+                        //Local stuff
                         postSingleEvent(obj, postingState);
-                    } else {
+                    }
+                    //Try to parse it for sending and then send it
+                    byte[] objectInArray = parseToSend(obj);
+                    if(obj != null && objectInArray != null) {
                         try {
-                            Parcelable objParcelable = (Parcelable) obj;
-                            new SendToDataLayerThread(objParcelable, context, false).start();
+                            new SendByteArrayToNode(objectInArray, obj.getClass(), context, false).start();
                         } catch (Exception e) {
                             if (logNoSubscriberMessages) {
-                                Log.e(TAG, "Object cannot be send as is not Parcelable.");
+                                Log.e(TAG, "Object cannot be send: " + e.getMessage());
                             }
                         }
-                    }
-                    if(obj != null){
-                        postSingleEvent(obj, postingState);
                     }
                 }
             } finally {
@@ -306,7 +312,10 @@ public class EventBus {
         }
     }
 
-    /** Posts the given event to the local event bus  */
+    /**
+     * Posts the given event (object) to the local event bus
+     * @param event any kind of Object, no restrictions.
+     */
     public void postLocal(Object event) {
         PostingThreadState postingState = currentPostingThreadState.get();
         List<Object> eventQueue = postingState.eventQueue;
@@ -329,8 +338,12 @@ public class EventBus {
         }
     }
 
-    /** Posts the given event to the remote event bus  */
-    public void postRemote(Parcelable event, Context context) {
+    /**
+     * Posts the given event (object) to the event bus, also send it to connected Wear device
+     * @param event needs to be Parcelable or Integer, Long, Float, Double, Short.
+     * @param context for sending object
+     */
+    public void postRemote(Object event, Context context) {
         PostingThreadState postingState = currentPostingThreadState.get();
         List<Object> eventQueue = postingState.eventQueue;
         eventQueue.add(event);
@@ -343,8 +356,56 @@ public class EventBus {
             }
             try {
                 while (!eventQueue.isEmpty()) {
-                    Parcelable obj = (Parcelable) eventQueue.remove(0);
-                    new SendToDataLayerThread(obj, context, false).start();
+                    Object obj = eventQueue.remove(0);
+                    //Try to parse it for sending and then send it
+                    byte[] objectInArray = parseToSend(obj);
+                    if(obj != null && objectInArray != null) {
+                        try {
+                            new SendByteArrayToNode(objectInArray, obj.getClass(), context, false).start();
+                        } catch (Exception e) {
+                            if (logNoSubscriberMessages) {
+                                Log.e(TAG, "Object cannot be send: " + e.getMessage());
+                            }
+                        }
+                    }
+                }
+            } finally {
+                postingState.isPosting = false;
+                postingState.isMainThread = false;
+            }
+        }
+    }
+    /**
+     * Posts the given event (object) to the event bus, also send it to connected Wear device
+     * @param event needs to be Parcelable or Integer, Long, Float, Double, Short.
+     * @param context for sending object
+     * @param isSticky should event be cached
+     */
+    private void postRemote(Object event, Context context, boolean isSticky) {
+        PostingThreadState postingState = currentPostingThreadState.get();
+        List<Object> eventQueue = postingState.eventQueue;
+        eventQueue.add(event);
+
+        if (!postingState.isPosting) {
+            postingState.isMainThread = Looper.getMainLooper() == Looper.myLooper();
+            postingState.isPosting = true;
+            if (postingState.canceled) {
+                throw new EventBusException("Internal error. Abort state was not reset");
+            }
+            try {
+                while (!eventQueue.isEmpty()) {
+                    Object obj = eventQueue.remove(0);
+                    //Try to parse it for sending and then send it
+                    byte[] objectInArray = parseToSend(obj);
+                    if(obj != null && objectInArray != null) {
+                        try {
+                            new SendByteArrayToNode(objectInArray, obj.getClass(), context, isSticky).start();
+                        } catch (Exception e) {
+                            if (logNoSubscriberMessages) {
+                                Log.e(TAG, "Object cannot be send: " + e.getMessage());
+                            }
+                        }
+                    }
                 }
             } finally {
                 postingState.isPosting = false;
@@ -353,27 +414,39 @@ public class EventBus {
         }
     }
 
-    private void postRemote(Parcelable event, Context context, boolean isSticky) {
-        PostingThreadState postingState = currentPostingThreadState.get();
-        List<Object> eventQueue = postingState.eventQueue;
-        eventQueue.add(event);
-
-        if (!postingState.isPosting) {
-            postingState.isMainThread = Looper.getMainLooper() == Looper.myLooper();
-            postingState.isPosting = true;
-            if (postingState.canceled) {
-                throw new EventBusException("Internal error. Abort state was not reset");
-            }
-            try {
-                while (!eventQueue.isEmpty()) {
-                    Parcelable obj = (Parcelable) eventQueue.remove(0);
-                    new SendToDataLayerThread(obj, context, isSticky).start();
-                }
-            } finally {
-                postingState.isPosting = false;
-                postingState.isMainThread = false;
-            }
+    /**
+     * Method used for parsing known objects or Parcelable one to byte[],
+     * some classes are not implemented (ex. Boolean) and most likely shouldn't be
+     * @param obj
+     * @return
+     */
+    private byte[] parseToSend(Object obj) {
+        if(obj instanceof NoSubscriberEvent){
+            return null;
         }
+        byte[] objArray;
+        if(obj instanceof String){
+            try {
+                objArray = ((String) obj).getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                objArray = ((String) obj).getBytes();
+            }
+        } else if (obj instanceof Integer) {
+            objArray = ByteBuffer.allocate(4).putInt((Integer) obj).array();
+        } else if (obj instanceof Long) {
+            objArray = ByteBuffer.allocate(8).putLong((Long) obj).array();
+        } else if (obj instanceof Float) {
+            objArray = ByteBuffer.allocate(4).putFloat((Float) obj).array();
+        } else if (obj instanceof Double) {
+            objArray = ByteBuffer.allocate(8).putDouble((Double) obj).array();
+        } else if (obj instanceof Short) {
+            objArray = ByteBuffer.allocate(2).putShort((Short) obj).array();
+        } else if (obj instanceof Parcelable) {
+            objArray = WearBusTools.parcelToByte((Parcelable) obj);
+        } else {
+            throw new RuntimeException("Object needs to be Parcelable or Integer, Long, Float, Double, Short.");
+        }
+        return objArray;
     }
 
     /**
@@ -655,7 +728,7 @@ public class EventBus {
 
     /** For ThreadLocal, much faster to set (and get multiple values). */
     final static class PostingThreadState {
-        final List<Object> eventQueue = new ArrayList<Object>();
+        final ArrayList<Object> eventQueue = new ArrayList<Object>();
         boolean isPosting;
         boolean isMainThread;
         Subscription subscription;
@@ -702,20 +775,21 @@ public class EventBus {
         return mGoogleApiClient;
     }
 
-    private class SendToDataLayerThread extends Thread {
-        private Parcelable object;
+    private class SendByteArrayToNode extends Thread {
+        private byte[] objectArray;
         private Context context;
         private boolean sticky;
+        private Class clazzToSend;
 
-        SendToDataLayerThread(Parcelable obj, Context ctx, boolean isSticky) {
-            object = obj;
+        SendByteArrayToNode(byte[] objArray, Class classToSend, Context ctx, boolean isSticky) {
+            objectArray = objArray;
             context = ctx;
             sticky = isSticky;
+            clazzToSend = classToSend;
         }
 
         public void run() {
-            byte[] objectArr = WearBusTools.parcelToByte(object);
-            if((objectArr.length/1024) > 100){
+            if((objectArray.length/1024) > 100){
                 throw new RuntimeException("Object is too big to push it via Google Play Services");
             }
             GoogleApiClient googleApiClient = getInstance(context);
@@ -724,9 +798,9 @@ public class EventBus {
             for (com.google.android.gms.wearable.Node node : nodes.getNodes()) {
                 MessageApi.SendMessageResult result;
                 if(sticky) {
-                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + object.getClass().getName() , objectArr).await();
+                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + clazzToSend.getName() , objectArray).await();
                 } else {
-                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + object.getClass().getName() , objectArr).await();
+                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + clazzToSend.getName() , objectArray).await();
                 }
                 if (!result.getStatus().isSuccess()) {
                     Log.v(TAG, "ERROR: failed to send Message via Google Play Services");
@@ -738,17 +812,13 @@ public class EventBus {
     /** Unparcelable object and post it to local bus to keep it in the "pipe"  */
     public static void syncEvent(MessageEvent messageEvent){
         //catch events
+        byte [] objectArray = messageEvent.getData();
         if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
             String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
             for (Class classTmp : classList) {
                 if (className.equals(classTmp.getSimpleName())) {
-                    try {
-                        Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
-                        EventBus.getDefault().postLocal(obj);
-                        //send them to local bus
-                    } catch (Exception e) {
-                        Log.d(TAG, "syncEvent error: " + e.getMessage());
-                    }
+                    Object obj = getSendObject(objectArray, className, classTmp);
+                    EventBus.getDefault().postLocal(obj);
                 }
             }
         } else if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY)) {
@@ -757,7 +827,7 @@ public class EventBus {
             for (Class classTmp : classList) {
                 if (className.equals(classTmp.getSimpleName())) {
                     try {
-                        Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(messageEvent.getData()));
+                        Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(objectArray));
                         EventBus.getDefault().postStickyLocal(obj);
                         //send them to local bus
                     } catch (Exception e) {
@@ -766,5 +836,33 @@ public class EventBus {
                 }
             }
         }
+    }
+
+    private static Object getSendObject(byte[] objectArray, String className, Class classTmp) {
+        Object obj = null;
+        if(className.equals("String")) {
+            try {
+                obj = new String(objectArray, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                Log.d(TAG, "syncEvent, cannot unparse event as: " + e.getMessage());
+            }
+        } else if(className.equals("Integer")){
+            obj = ByteBuffer.wrap(objectArray).getInt();
+        } else if(className.equals("Long")){
+            obj = ByteBuffer.wrap(objectArray).getLong();
+        } else if(className.equals("Double")){
+            obj = ByteBuffer.wrap(objectArray).getDouble();
+        } else if(className.equals("Float")){
+            obj = ByteBuffer.wrap(objectArray).getFloat();
+        } else if(className.equals("Short")){
+            obj = ByteBuffer.wrap(objectArray).getShort();
+        } else {
+            try {
+                obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(objectArray));
+            } catch (Exception e) {
+                Log.d(TAG, "syncEvent error: " + e.getMessage());
+            }
+        }
+        return obj;
     }
 }
