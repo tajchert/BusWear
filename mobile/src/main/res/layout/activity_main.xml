@@ -15,6 +15,14 @@
         android:layout_height="wrap_content"
         android:hint="text to send" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dp"
+        android:text="Send custom object that has String and implements Parcelable."
+        android:textColor="@android:color/darker_gray"/>
+
     <Button
         android:id="@+id/buttonEverywhere"
         android:layout_width="200dp"
@@ -38,6 +46,35 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
         android:text="Send remote" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_margin="10dp"
+        android:background="@android:color/darker_gray"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Send one of: String, Short, Integer, Long, Double, Float - no need for Parcelable!"
+        android:textColor="@android:color/darker_gray"/>
+
+    <Button
+        android:id="@+id/buttonRemoteRandom"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_gravity="center_horizontal"
+        android:text="Send random type (everywhere)" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dp"
+        android:text="But there are no local receives for those objects - all of them are on Wear."
+        android:textColor="@android:color/darker_gray"/>
 
 
 </LinearLayout>
