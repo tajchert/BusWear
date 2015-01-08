@@ -7,6 +7,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import pl.tajchert.buswear.EventBus;
@@ -61,32 +63,9 @@ public class MainMobileActivity extends ActionBarActivity {
         buttonRemoteRandom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch(rand.nextInt(6)){
-                    case 0:
-                        //Send String object
-                        EventBus.getDefault().post(editTextToSend.getText().toString(), MainMobileActivity.this);
-                        break;
-                    case 1:
-                        //Send Integer
-                        EventBus.getDefault().post(1, MainMobileActivity.this);
-                        break;
-                    case 2:
-                        //Send Long
-                        EventBus.getDefault().post(1l, MainMobileActivity.this);
-                        break;
-                    case 3:
-                        //Send Float
-                        EventBus.getDefault().post(1f, MainMobileActivity.this);
-                        break;
-                    case 4:
-                        //Send Double
-                        EventBus.getDefault().post(1d, MainMobileActivity.this);
-                        break;
-                    case 5:
-                        //Send Short
-                        EventBus.getDefault().post((short) 1, MainMobileActivity.this);
-                        break;
-                }
+                List<Object> messages = Arrays.<Object>asList(editTextToSend.getText().toString(), 1, 1L, 1.0f, 1.0, (short) 1);
+                Object random = messages.get(rand.nextInt(messages.size()));
+                EventBus.getDefault().post(random, MainMobileActivity.this);
             }
         });
     }
