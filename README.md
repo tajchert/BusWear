@@ -21,11 +21,11 @@ To start with BusWear all you need is to add a dependency. That is it!
 
 ###Add BusWear to your project
 
-BusWear is available on Maven Central.
-
 Gradle:
 ```gradle
-    compile 'pl.tajchert:buswear:0.9.3'
+    //library:
+    compile 'pl.tajchert:buswear:0.9.4'
+    //needed dependency:
     compile 'com.google.android.gms:play-services-wearable:+'
 ```
 
@@ -34,7 +34,7 @@ Maven:
 <dependency>
     <groupId>pl.tajchert</groupId>
     <artifactId>buswear</artifactId>
-    <version>0.9.3</version>
+    <version>0.9.4</version>
 </dependency>
 ```
 
@@ -43,14 +43,14 @@ Maven:
 
 ###How to use?
 
-You can post to remote branch as long as it `implements Parcelable`, other "non-Parcelable" object you still can post but only locally.
+You can post to remote branch as long as it `String, Integer, Long, Short, Float, Double` or custom object that `implements Parcelable`, other "non-Parcelable" objects still can be posted but only locally.
 
 
-`post(parcelableObject, context);` sends your parcelable object both to local bus and to remote one as well.
+`post(object, context);` sends your parcelable object (or `String, Integer`...) both to local bus and to remote one as well.
 
 `postLocal(object)` works as old `post()` of EventBus, it sends event only locally.
 
-`postRemote(parcelableObject, context)` sends your parcelable object to remote bus only.
+`postRemote(object, context)` sends your parcelable object (or `String, Integer`...) to remote bus only.
 
 The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLocal()`, `postStickyRemote()`. However not all "sticky" functionality is supported yet - ex. `removeStickyEvent()` is not implemented (TODO), and works only locally.
 
@@ -65,14 +65,16 @@ EventBus.getDefault().post(parcelableObject, this);
 
 To receive:
 ```java
-@Override
 protected void onCreate(Bundle savedInstanceState) {
     //...
     EventBus.getDefault().register(this);
 }
 
-//Called every time when post() is ParcelableObject as an object
+//Called every time when post() is send (with that particular object), needs to be named "onEvent(ObjectType)"
 public void onEvent(ParcelableObject parcelableObject){
+    //Do your stuff with that object
+}
+public void onEvent(String text){
     //Do your stuff with that object
 }
 ```
@@ -80,13 +82,17 @@ public void onEvent(ParcelableObject parcelableObject){
 
 ###Questions?
 
+**How is that better than classic EventBus?**
+
+_EventBus works on mobile na Android Wear - yes, but you got two separate buses, and BusWear gives you a feel of one bus that is shared/synchronized between those two devices._
+
 **Why does it uses whole code of EventBus instead of "extends EventBus"?**
 
 _As it overrides some private methods to get for example subscribed method classes of parameters for unparcelling objects after receiving them in Parcel. If that problem will be resolved I will be glad to use EventBus as dependency._
 
 **What are some drawbacks?**
 
-_Probably quite big one is that all your objects to be posted needs to implement `Parcelable`. I recommend using for that purpose some library such as Parceler, Hrisey or Auto-Parcel for this._
+_Probably quite big one is that all your custom objects to be posted needs to implement `Parcelable` (or be `String, Integer...`). I recommend using for that purpose some library such as Parceler, Hrisey or Auto-Parcel for this._
 
 _Other one is that you cannot have classes with same name in the same module (for example "wear") - it will lead to errors as matching is done on SimpleName of class._
 
