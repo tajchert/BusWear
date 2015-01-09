@@ -7,7 +7,7 @@ BusWear - EventBus for Android Wear
 
 BusWear (:bus::watch:) is a simple library for EventBus to support Android Wear devices. Just adding one line of code lets you get synchronized event buses on Wear and mobile platform.
 
-![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/diagram_simple.png)
+![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/docs/diagram_simple.png)
 
 ###What is EventBus?
 
@@ -61,9 +61,9 @@ To send:
 
 ```java
 EventBus.getDefault().post(parcelableObject, this);     //Custom parcelable object
-EventBus.getDefault().post("text", this);               //String
-EventBus.getDefault().post(1.0f, this);                 //Float
+EventBus.getDefault().postRemote("text", this);         //String
 //... similar with Integer, Long etc.
+EventBus.getDefault().postLocal('c', this);            //Character - to local function you can pass any object that you like
 ```
 
 To receive:
@@ -84,6 +84,11 @@ public void onEvent(String text){
 //... more onEvent() if you want!
 ```
 
+###Event propagation
+
+![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/docs/diagram_post.png)
+![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/docs/diagram_postremote.png)
+![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/docs/diagram_postlocal.png)
 
 ###Questions?
 
