@@ -827,7 +827,7 @@ public class EventBus {
             for (Class classTmp : classList) {
                 if (className.equals(classTmp.getSimpleName())) {
                     try {
-                        Object obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(objectArray));
+                        Object obj = getSendObject(objectArray, className, classTmp);
                         EventBus.getDefault().postStickyLocal(obj);
                         //send them to local bus
                     } catch (Exception e) {
