@@ -11,9 +11,7 @@ BusWear (:bus::watch:) is a simple library for EventBus to support Android Wear 
 
 ###What is EventBus?
 
-A great multi-purpose tool for Android apps, great way of triggering some events in separate Activity, Fragment, Service etc.
-
-[EventBus, origin of that project](https://github.com/greenrobot/EventBus) or [Otto](https://github.com/square/otto).
+A great multi-purpose tool for Android apps, way of triggering some events in separate Activity, Fragment, Service etc. [EventBus, origin of that project](https://github.com/greenrobot/EventBus) or [Otto](https://github.com/square/otto).
 
 ###How to start?
 
@@ -86,9 +84,11 @@ public void onEvent(String text){
 
 ###Event propagation
 
-![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/docs/diagram_post.png)
-![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/docs/diagram_postremote.png)
-![Diagram](https://raw.githubusercontent.com/tajchert/BusWear/master/docs/diagram_postlocal.png)
+<img src="docs/diagram_post.png" width="600" height="361"/>
+------------------------
+<img src="docs/diagram_postremote.png" width="600" height="361"/>
+------------------------
+<img src="docs/diagram_postlocal.png" width="600" height="361"/>
 
 ###Questions?
 
