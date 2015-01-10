@@ -17,6 +17,7 @@ package pl.tajchert.buswear;
 
 import android.content.Context;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
@@ -34,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 
 import pl.tajchert.buswear.wear.SendByteArrayToNode;
+import pl.tajchert.buswear.wear.SendCommandToNode;
 import pl.tajchert.buswear.wear.SendWearManager;
 import pl.tajchert.buswear.wear.WearBusTools;
 
@@ -535,9 +537,26 @@ public class EventBus {
     }
 
     /**
-     * Removes all sticky events.
+     * Removes all sticky events, both on a local and on a remote device.
      */
-    public void removeAllStickyEvents() {//TODO send command via Google Play Services
+    public void removeAllStickyEvents(Context context) {
+        removeAllStickyEventsRemote(context);
+        synchronized (stickyEvents) {
+            stickyEvents.clear();
+        }
+    }
+
+    /**
+     * Removes all sticky events, only on a remote device.
+     */
+    public void removeAllStickyEventsRemote(Context context) {
+        new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND, WearBusTools.ACTION_STICKY_CLEAR_ALL.getBytes(), String.class, context).start();
+    }
+
+    /**
+     * Removes all sticky events, only on a local device.
+     */
+    public void removeAllStickyEventsLocal() {
         synchronized (stickyEvents) {
             stickyEvents.clear();
         }
@@ -743,26 +762,58 @@ public class EventBus {
         byte [] objectArray = messageEvent.getData();
         if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
             String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
-            for (Class classTmp : classList) {
-                if (className.equals(classTmp.getSimpleName())) {
-                    Object obj = SendWearManager.getSendObject(objectArray, className, classTmp);
-                    EventBus.getDefault().postLocal(obj);
-                }
+            //Try simple types (String, Integer, Long...)
+            Object obj = SendWearManager.getSendSimpleObject(objectArray, className);
+            if(obj == null) {
+                //Find corresponding parcel for particular object in local receivers
+                obj = findParcel(objectArray, className);
+            }
+
+            if(obj != null){
+                //send them to local bus
+                EventBus.getDefault().postLocal(obj);
             }
         } else if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY)) {
             //Catch sticky events
             String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
-            for (Class classTmp : classList) {
-                if (className.equals(classTmp.getSimpleName())) {
+            //Try simple types (String, Integer, Long...)
+            Object obj = SendWearManager.getSendSimpleObject(objectArray, className);
+            if(obj == null) {
+                //Find corresponding parcel for particular object in local receivers
+                obj = findParcel(objectArray, className);
+            }
+
+            if(obj != null){
+                //send them to local bus
+                EventBus.getDefault().postStickyLocal(obj);
+            }
+        } else if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_COMMAND)){
+            String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
+            if(className.equals("String")){
+                String action = new String(objectArray);
+                Log.d(TAG, "syncEvent action: " + action);
+                if(action.equals(WearBusTools.ACTION_STICKY_CLEAR_ALL)){
+                    getDefault().removeAllStickyEventsLocal();
+                }
+            }
+
+        }
+    }
+
+    private static Object findParcel(byte[] objectArray, String className) {
+        for (Class classTmp : classList) {
+            if (className.equals(classTmp.getSimpleName())) {
+                try {
                     try {
-                        Object obj = SendWearManager.getSendObject(objectArray, className, classTmp);
-                        EventBus.getDefault().postStickyLocal(obj);
-                        //send them to local bus
+                        return classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(objectArray));
                     } catch (Exception e) {
-                        Log.d(TAG, "syncEvent error: " + e.getMessage());
+                        Log.d(WearBusTools.BUSWEAR_TAG, "syncEvent error: " + e.getMessage());
                     }
+                } catch (Exception e) {
+                    Log.d(TAG, "syncEvent error: " + e.getMessage());
                 }
             }
         }
+        return null;
     }
 }

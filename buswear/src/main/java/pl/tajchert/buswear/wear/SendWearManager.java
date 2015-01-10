@@ -2,7 +2,6 @@ package pl.tajchert.buswear.wear;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -50,7 +49,7 @@ public class SendWearManager {
      * Internal BusWear method, using it outside of library is possible but not supported or tested.
      *  Recreates received object using classname and byte[]
      */
-    public static Object getSendObject(byte[] objectArray, String className, Class classTmp) {
+    public static Object getSendSimpleObject(byte[] objectArray, String className) {
         Object obj = null;
         if(className.equals("String")) {
             try {
@@ -68,12 +67,6 @@ public class SendWearManager {
             obj = ByteBuffer.wrap(objectArray).getFloat();
         } else if(className.equals("Short")){
             obj = ByteBuffer.wrap(objectArray).getShort();
-        } else {
-            try {
-                obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(objectArray));
-            } catch (Exception e) {
-                Log.d(WearBusTools.BUSWEAR_TAG, "syncEvent error: " + e.getMessage());
-            }
         }
         return obj;
     }
