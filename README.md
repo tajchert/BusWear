@@ -2,6 +2,7 @@ BusWear - EventBus for Android Wear
 =======
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/pl.tajchert/buswear/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/pl.tajchert/buswear)
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-BusWear-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/1336)
 
 ![BusWear logo](https://raw.githubusercontent.com/tajchert/BusWear/master/mobile/src/main/res/drawable-xxxhdpi/ic_launcher.png)
 
