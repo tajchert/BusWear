@@ -1,12 +1,16 @@
-package pl.tajchert.buswear.util;
+package pl.tajchert.buswear.wear;
 
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 public class WearBusTools {
+    public static final String BUSWEAR_TAG = "BusWearTag";
     public final static String MESSAGE_PATH = "pl.tajchert.buswear.event.";
     public final static String MESSAGE_PATH_STICKY = "pl.tajchert.buswear.stickyevent.";
+
+
+    public static final long CONNECTION_TIME_OUT_MS = 100;
 
     public static byte[] parcelToByte(Parcelable parceable) {
         Parcel parcel = Parcel.obtain();

@@ -16,18 +16,11 @@
 package pl.tajchert.buswear;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.os.Looper;
-import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
-import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.Wearable;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
@@ -39,9 +32,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import pl.tajchert.buswear.util.WearBusTools;
+import pl.tajchert.buswear.wear.SendByteArrayToNode;
+import pl.tajchert.buswear.wear.SendWearManager;
+import pl.tajchert.buswear.wear.WearBusTools;
 
 /**
  * EventBus is a central publish/subscribe event system for Android. Events are posted ({@link #postLocal(Object)}) to the
@@ -89,8 +83,6 @@ public class EventBus {
     private final boolean sendNoSubscriberEvent;
     private final boolean eventInheritance;
 
-    private static GoogleApiClient mGoogleApiClient;
-    private static final long CONNECTION_TIME_OUT_MS = 100;
 
     /** Convenience singleton for apps using a process-wide EventBus instance. */
     public static EventBus getDefault() {
@@ -745,70 +737,6 @@ public class EventBus {
         void onPostCompleted(List<SubscriberExceptionEvent> exceptionEvents);
     }
 
-    private GoogleApiClient getInstance (Context context) {
-        if(mGoogleApiClient == null) {
-            if(context == null) {
-                return null;
-            }
-            mGoogleApiClient = new GoogleApiClient.Builder(context)
-                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                        @Override
-                        public void onConnected(Bundle connectionHint) {
-                            Log.d(TAG, "onConnected");
-                            // Now you can use the Data Layer API
-                        }
-                        @Override
-                        public void onConnectionSuspended(int cause) {
-                            Log.d(TAG, "onConnectionSuspended");
-                        }
-                    })
-                    .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                        @Override
-                        public void onConnectionFailed(ConnectionResult result) {
-                            Log.d(TAG, "onConnectionFailed");
-                        }
-                    })
-                            // Request access only to the Wearable API
-                    .addApi(Wearable.API)
-                    .build();
-        }
-        return mGoogleApiClient;
-    }
-
-    private class SendByteArrayToNode extends Thread {
-        private byte[] objectArray;
-        private Context context;
-        private boolean sticky;
-        private Class clazzToSend;
-
-        SendByteArrayToNode(byte[] objArray, Class classToSend, Context ctx, boolean isSticky) {
-            objectArray = objArray;
-            context = ctx;
-            sticky = isSticky;
-            clazzToSend = classToSend;
-        }
-
-        public void run() {
-            if((objectArray.length/1024) > 100){
-                throw new RuntimeException("Object is too big to push it via Google Play Services");
-            }
-            GoogleApiClient googleApiClient = getInstance(context);
-            googleApiClient.blockingConnect(CONNECTION_TIME_OUT_MS, TimeUnit.MILLISECONDS);
-            NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient).await();
-            for (com.google.android.gms.wearable.Node node : nodes.getNodes()) {
-                MessageApi.SendMessageResult result;
-                if(sticky) {
-                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + clazzToSend.getName() , objectArray).await();
-                } else {
-                    result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + clazzToSend.getName() , objectArray).await();
-                }
-                if (!result.getStatus().isSuccess()) {
-                    Log.v(TAG, "ERROR: failed to send Message via Google Play Services");
-                }
-            }
-        }
-    }
-
     /** Unparcelable object and post it to local bus to keep it in the "pipe"  */
     public static void syncEvent(MessageEvent messageEvent){
         //catch events
@@ -817,7 +745,7 @@ public class EventBus {
             String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
             for (Class classTmp : classList) {
                 if (className.equals(classTmp.getSimpleName())) {
-                    Object obj = getSendObject(objectArray, className, classTmp);
+                    Object obj = SendWearManager.getSendObject(objectArray, className, classTmp);
                     EventBus.getDefault().postLocal(obj);
                 }
             }
@@ -827,7 +755,7 @@ public class EventBus {
             for (Class classTmp : classList) {
                 if (className.equals(classTmp.getSimpleName())) {
                     try {
-                        Object obj = getSendObject(objectArray, className, classTmp);
+                        Object obj = SendWearManager.getSendObject(objectArray, className, classTmp);
                         EventBus.getDefault().postStickyLocal(obj);
                         //send them to local bus
                     } catch (Exception e) {
@@ -836,33 +764,5 @@ public class EventBus {
                 }
             }
         }
-    }
-
-    private static Object getSendObject(byte[] objectArray, String className, Class classTmp) {
-        Object obj = null;
-        if(className.equals("String")) {
-            try {
-                obj = new String(objectArray, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                Log.d(TAG, "syncEvent, cannot unparse event as: " + e.getMessage());
-            }
-        } else if(className.equals("Integer")){
-            obj = ByteBuffer.wrap(objectArray).getInt();
-        } else if(className.equals("Long")){
-            obj = ByteBuffer.wrap(objectArray).getLong();
-        } else if(className.equals("Double")){
-            obj = ByteBuffer.wrap(objectArray).getDouble();
-        } else if(className.equals("Float")){
-            obj = ByteBuffer.wrap(objectArray).getFloat();
-        } else if(className.equals("Short")){
-            obj = ByteBuffer.wrap(objectArray).getShort();
-        } else {
-            try {
-                obj = classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(objectArray));
-            } catch (Exception e) {
-                Log.d(TAG, "syncEvent error: " + e.getMessage());
-            }
-        }
-        return obj;
     }
 }
