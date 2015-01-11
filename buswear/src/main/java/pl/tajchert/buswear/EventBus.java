@@ -23,9 +23,7 @@ import android.util.Log;
 
 import com.google.android.gms.wearable.MessageEvent;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 
 import pl.tajchert.buswear.wear.SendByteArrayToNode;
 import pl.tajchert.buswear.wear.SendCommandToNode;
-import pl.tajchert.buswear.wear.SendWearManager;
 import pl.tajchert.buswear.wear.WearBusTools;
 
 /**
@@ -288,7 +285,7 @@ public class EventBus {
                         postSingleEvent(obj, postingState);
                     }
                     //Try to parse it for sending and then send it
-                    byte[] objectInArray = parseToSend(obj);
+                    byte[] objectInArray = WearBusTools.parseToSend(obj);
                     if(obj != null && objectInArray != null) {
                         try {
                             new SendByteArrayToNode(objectInArray, obj.getClass(), context, false).start();
@@ -352,7 +349,7 @@ public class EventBus {
                 while (!eventQueue.isEmpty()) {
                     Object obj = eventQueue.remove(0);
                     //Try to parse it for sending and then send it
-                    byte[] objectInArray = parseToSend(obj);
+                    byte[] objectInArray = WearBusTools.parseToSend(obj);
                     if(obj != null && objectInArray != null) {
                         try {
                             new SendByteArrayToNode(objectInArray, obj.getClass(), context, false).start();
@@ -390,7 +387,7 @@ public class EventBus {
                 while (!eventQueue.isEmpty()) {
                     Object obj = eventQueue.remove(0);
                     //Try to parse it for sending and then send it
-                    byte[] objectInArray = parseToSend(obj);
+                    byte[] objectInArray = WearBusTools.parseToSend(obj);
                     if(obj != null && objectInArray != null) {
                         try {
                             new SendByteArrayToNode(objectInArray, obj.getClass(), context, isSticky).start();
@@ -408,40 +405,7 @@ public class EventBus {
         }
     }
 
-    /**
-     * Method used for parsing known objects or Parcelable one to byte[],
-     * some classes are not implemented (ex. Boolean) and most likely shouldn't be
-     * @param obj
-     * @return
-     */
-    private byte[] parseToSend(Object obj) {
-        if(obj instanceof NoSubscriberEvent){
-            return null;
-        }
-        byte[] objArray;
-        if(obj instanceof String){
-            try {
-                objArray = ((String) obj).getBytes("UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                objArray = ((String) obj).getBytes();
-            }
-        } else if (obj instanceof Integer) {
-            objArray = ByteBuffer.allocate(4).putInt((Integer) obj).array();
-        } else if (obj instanceof Long) {
-            objArray = ByteBuffer.allocate(8).putLong((Long) obj).array();
-        } else if (obj instanceof Float) {
-            objArray = ByteBuffer.allocate(4).putFloat((Float) obj).array();
-        } else if (obj instanceof Double) {
-            objArray = ByteBuffer.allocate(8).putDouble((Double) obj).array();
-        } else if (obj instanceof Short) {
-            objArray = ByteBuffer.allocate(2).putShort((Short) obj).array();
-        } else if (obj instanceof Parcelable) {
-            objArray = WearBusTools.parcelToByte((Parcelable) obj);
-        } else {
-            throw new RuntimeException("Object needs to be Parcelable or Integer, Long, Float, Double, Short.");
-        }
-        return objArray;
-    }
+
 
     /**
      * Called from a subscriber's event handling method, further event delivery will be canceled. Subsequent
@@ -562,7 +526,7 @@ public class EventBus {
      * Removes the sticky event if it equals to the given event, only on remote bus.
      */
     public void removeStickyEventRemote(Object event, Context context) {
-        byte[] objectInArray = parseToSend(event);
+        byte[] objectInArray = WearBusTools.parseToSend(event);
         if(event != null && objectInArray != null) {
             new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND + "event.", objectInArray, event.getClass(), context).start();
         }
@@ -813,7 +777,7 @@ public class EventBus {
         if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
             String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
             //Try simple types (String, Integer, Long...)
-            Object obj = SendWearManager.getSendSimpleObject(objectArray, className);
+            Object obj = WearBusTools.getSendSimpleObject(objectArray, className);
             if(obj == null) {
                 //Find corresponding parcel for particular object in local receivers
                 obj = findParcel(objectArray, className);
@@ -827,7 +791,7 @@ public class EventBus {
             //Catch sticky events
             String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
             //Try simple types (String, Integer, Long...)
-            Object obj = SendWearManager.getSendSimpleObject(objectArray, className);
+            Object obj = WearBusTools.getSendSimpleObject(objectArray, className);
             if(obj == null) {
                 //Find corresponding parcel for particular object in local receivers
                 obj = findParcel(objectArray, className);
@@ -873,7 +837,7 @@ public class EventBus {
                 }
             } else {
                 //Call removeStickyEventLocal so first retrieve object that needs to be removed.
-                Object obj = SendWearManager.getSendSimpleObject(objectArray, className);
+                Object obj = WearBusTools.getSendSimpleObject(objectArray, className);
                 if(obj == null) {
                     //Find corresponding parcel for particular object in local receivers
                     obj = findParcel(objectArray, className);
