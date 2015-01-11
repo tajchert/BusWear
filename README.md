@@ -23,7 +23,7 @@ To start with BusWear all you need is to add a dependency. That is it!
 Gradle:
 ```gradle
     //library:
-    compile 'pl.tajchert:buswear:0.9.4'
+    compile 'pl.tajchert:buswear:0.9.5'
     //needed dependency:
     compile 'com.google.android.gms:play-services-wearable:+'
 ```
@@ -51,7 +51,7 @@ You can post to remote branch as long as it `String, Integer, Long, Short, Float
 
 `postRemote(object, context)` sends your parcelable object (or `String, Integer`...) to remote bus only.
 
-The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLocal()`, `postStickyRemote()`. However not all "sticky" functionality is supported yet - ex. `removeStickyEvent()` is not implemented (TODO), and works only locally.
+The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLocal()`, `postStickyRemote()`. Also methods such `removeStickyEvent(Object)`, `removeStickyEvent(Class)`, `removeAllStickyEvents()` work in same manner - you get everywhere, remote, local flavours of each method.
 
 
 ###Sample
