@@ -12,7 +12,7 @@ public class WearBusTools {
 
     //Commands
     public final static String ACTION_STICKY_CLEAR_ALL = "pl.tajchert.buswear.clearall";
-
+    //Other commands to remove object of some class of particular one, are created by adding "class." or "event." dynamically to MESSAGE_PATH_COMMAND
 
     public static final long CONNECTION_TIME_OUT_MS = 100;
 

@@ -38,9 +38,9 @@ public class SendByteArrayToNode extends Thread {
         for (Node node : nodes.getNodes()) {
             MessageApi.SendMessageResult result;
             if (sticky) {
-                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + clazzToSend.getName(), objectArray).await();
+                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + clazzToSend.getSimpleName(), objectArray).await();
             } else {
-                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + clazzToSend.getName(), objectArray).await();
+                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + clazzToSend.getSimpleName(), objectArray).await();
             }
             if (!result.getStatus().isSuccess()) {
                 Log.v(WearBusTools.BUSWEAR_TAG, "ERROR: failed to send Message via Google Play Services");

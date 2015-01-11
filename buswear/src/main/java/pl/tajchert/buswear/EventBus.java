@@ -508,22 +508,72 @@ public class EventBus {
     }
 
     /**
-     * Remove and gets the recent sticky event for the given event type.
+     * Remove and gets the recent sticky event for the given event type, both on local and remote bus.
      *
      * @see #postSticky(Parcelable, Context)
      */
-    public <T> T removeStickyEvent(Class<T> eventType) {//TODO send command via Google Play Services
+    public <T> T removeStickyEvent(Class<T> eventType, Context context) {
+        removeStickyEventRemote(eventType, context);
         synchronized (stickyEvents) {
             return eventType.cast(stickyEvents.remove(eventType));
         }
     }
 
     /**
-     * Removes the sticky event if it equals to the given event.
+     * Remove and gets the recent sticky event for the given event type, only on remote bus.
+     *
+     * @see #postSticky(Parcelable, Context)
+     */
+    public <T> void removeStickyEventRemote(Class<T> eventType, Context context) {
+        new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND + "class.", null, eventType, context).start();
+    }
+
+    /**
+     * Remove and gets the recent sticky event for the given event type, both on local and remote bus.
+     *
+     * @see #postSticky(Parcelable, Context)
+     */
+    public <T> T removeStickyEventLocal(Class<T> eventType) {
+        synchronized (stickyEvents) {
+            return eventType.cast(stickyEvents.remove(eventType));
+        }
+    }
+
+    /**
+     * Removes the sticky event if it equals to the given event, both on local and remote bus.
+     *
+     * @return true if the events matched and the sticky event was removed on local bus.
+     */
+    public boolean removeStickyEvent(Object event, Context context) {
+        removeStickyEventRemote(event, context);
+        synchronized (stickyEvents) {
+            Class<?> eventType = event.getClass();
+            Object existingEvent = stickyEvents.get(eventType);
+            if (event.equals(existingEvent)) {
+                stickyEvents.remove(eventType);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Removes the sticky event if it equals to the given event, only on remote bus.
+     */
+    public void removeStickyEventRemote(Object event, Context context) {
+        byte[] objectInArray = parseToSend(event);
+        if(event != null && objectInArray != null) {
+            new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND + "event.", objectInArray, event.getClass(), context).start();
+        }
+    }
+
+    /**
+     * Removes the sticky event if it equals to the given event, only on local bus.
      *
      * @return true if the events matched and the sticky event was removed.
      */
-    public boolean removeStickyEvent(Object event) {//TODO send command via Google Play Services
+    public boolean removeStickyEventLocal(Object event) {
         synchronized (stickyEvents) {
             Class<?> eventType = event.getClass();
             Object existingEvent = stickyEvents.get(eventType);
@@ -788,15 +838,50 @@ public class EventBus {
                 EventBus.getDefault().postStickyLocal(obj);
             }
         } else if(messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_COMMAND)){
-            String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
-            if(className.equals("String")){
-                String action = new String(objectArray);
-                Log.d(TAG, "syncEvent action: " + action);
-                if(action.equals(WearBusTools.ACTION_STICKY_CLEAR_ALL)){
-                    getDefault().removeAllStickyEventsLocal();
+            //Commands used for managing sticky events.
+            stickyEventCommand(messageEvent, objectArray);
+        }
+    }
+
+    /**
+     * Method used to find which command and if class/object is needed to retrieve it and call local method.
+     */
+    private static void stickyEventCommand(MessageEvent messageEvent, byte[] objectArray) {
+        String className =  messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
+        if(className.equals("String")){
+            String action = new String(objectArray);
+            Log.d(TAG, "syncEvent action: " + action);
+            if(action.equals(WearBusTools.ACTION_STICKY_CLEAR_ALL)){
+                getDefault().removeAllStickyEventsLocal();
+            } else {
+                //Even if it was String it should be removeStickyEventLocal instead of all, it is due to fact that action key is send as a String.
+                for (Class classTmp : classList) {
+                    if (className.equals(classTmp.getSimpleName())) {
+                        getDefault().removeStickyEventLocal(classTmp);
+                    }
                 }
             }
-
+        } else {
+            int dotPlace = messageEvent.getPath().lastIndexOf(".");
+            String typeOfRemove = messageEvent.getPath().substring(dotPlace - 5, dotPlace);
+            if(typeOfRemove.equals("class")){
+                //Call removeStickyEventLocal so first retrieve class that needs to be removed.
+                for (Class classTmp : classList) {
+                    if (className.equals(classTmp.getSimpleName())) {
+                        getDefault().removeStickyEventLocal(classTmp);
+                    }
+                }
+            } else {
+                //Call removeStickyEventLocal so first retrieve object that needs to be removed.
+                Object obj = SendWearManager.getSendSimpleObject(objectArray, className);
+                if(obj == null) {
+                    //Find corresponding parcel for particular object in local receivers
+                    obj = findParcel(objectArray, className);
+                }
+                if(obj != null){
+                    getDefault().removeStickyEventLocal(obj);
+                }
+            }
         }
     }
 
