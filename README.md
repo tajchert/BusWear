@@ -33,7 +33,7 @@ Maven:
 <dependency>
     <groupId>pl.tajchert</groupId>
     <artifactId>buswear</artifactId>
-    <version>0.9.4</version>
+    <version>0.9.5</version>
 </dependency>
 ```
 
