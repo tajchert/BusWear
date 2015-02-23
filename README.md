@@ -103,7 +103,7 @@ _As it overrides some private methods to get for example subscribed method class
 
 **What are some drawbacks?**
 
-_Probably quite big one is that all your custom objects to be posted needs to implement `Parcelable` (or be `String, Integer...`). I recommend using for that purpose some library such as Parceler, Hrisey or Auto-Parcel for this._
+_Probably quite big one is that all your custom objects to be posted needs to implement `Parcelable` (or be `String, Integer...`)._
 
 _Other one is that you cannot have classes with same name in the same module (for example "wear") - it will lead to errors as matching is done on SimpleName of class._
 
