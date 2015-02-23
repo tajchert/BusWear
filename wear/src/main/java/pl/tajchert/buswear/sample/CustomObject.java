@@ -5,7 +5,6 @@ import android.os.Parcelable;
 
 
 public class CustomObject implements Parcelable {
-    //implements Parcelable but I would suggest using Parceler or Auto-Parcel library (or any other).
     private String name;
 
     public CustomObject(String name) {
