@@ -99,4 +99,15 @@ public class WearBusTools {
         }
         return objArray;
     }
+
+    /**
+     * A convenience method that can be used to check if an event fits the size limit of
+     * what can be sent via Google Play Services.
+     * @param obj
+     * @return true if the object can be sent false if it cannot
+     */
+    public static boolean objectCanBeSent(Object obj) {
+        byte[] objArray = parseToSend(obj);
+        return objArray == null || (objArray.length / 1024) < 100;
+    }
 }
