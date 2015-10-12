@@ -26,12 +26,13 @@ public class SendByteArrayToNode extends Thread {
         context = ctx;
         sticky = isSticky;
         clazzToSend = classToSend;
-    }
 
-    public void run() {
         if ((objectArray.length / 1024) > 100) {
             throw new RuntimeException("Object is too big to push it via Google Play Services");
         }
+    }
+
+    public void run() {
         GoogleApiClient googleApiClient = SendWearManager.getInstance(context);
         googleApiClient.blockingConnect(WearBusTools.CONNECTION_TIME_OUT_MS, TimeUnit.MILLISECONDS);
         NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient).await();
