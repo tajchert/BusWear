@@ -10,7 +10,20 @@ import com.google.android.gms.wearable.Wearable;
 
 
 public class SendWearManager {
+
+    public interface OnSendWearConnectionCallback extends GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener { }
+
     private static GoogleApiClient mGoogleApiClient;
+
+    /**
+     * Set the default OnSendWearConnectionCallback to receive Google Api Client connection
+     * callbacks. This must be set before any EventBus methods, usually in the application
+     * class.
+     * @param defaultOnSendWearConnectionCallback
+     */
+    public static void setDefaultOnSendWearConnectionCallback(OnSendWearConnectionCallback defaultOnSendWearConnectionCallback) {
+        SendWearManager.defaultOnSendWearConnectionCallback = defaultOnSendWearConnectionCallback;
+    }
 
     /**
      * Internal BusWear method, using it outside of library is not supported or tested.
@@ -18,27 +31,35 @@ public class SendWearManager {
      */
     public static GoogleApiClient getInstance (Context context) {
         if(mGoogleApiClient == null) {
+
             if(context == null) {
                 return null;
             }
+
             mGoogleApiClient = new GoogleApiClient.Builder(context)
-                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                        @Override
-                        public void onConnected(Bundle connectionHint) {
-                                Log.d(WearBusTools.BUSWEAR_TAG, "onConnected");
-                                // Now you can use the Data Layer API
-                            }
-                            @Override
-                            public void onConnectionSuspended ( int cause){
-                                Log.d(WearBusTools.BUSWEAR_TAG, "onConnectionSuspended");
-                            }
-                        }).addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                        @Override
-                        public void onConnectionFailed(ConnectionResult result) {
-                            Log.d(WearBusTools.BUSWEAR_TAG, "onConnectionFailed");
-                        }
-                    }).addApi(Wearable.API).build();
-                    }
-            return mGoogleApiClient;
+                    .addConnectionCallbacks(defaultOnSendWearConnectionCallback)
+                    .addOnConnectionFailedListener(defaultOnSendWearConnectionCallback)
+                    .addApi(Wearable.API)
+                    .build();
+        }
+
+        return mGoogleApiClient;
     }
+
+    private static OnSendWearConnectionCallback defaultOnSendWearConnectionCallback = new OnSendWearConnectionCallback() {
+        @Override
+        public void onConnected(Bundle bundle) {
+            Log.d(WearBusTools.BUSWEAR_TAG, "onConnected");
+        }
+
+        @Override
+        public void onConnectionSuspended(int cause) {
+            Log.d(WearBusTools.BUSWEAR_TAG, "onConnectionSuspended");
+        }
+
+        @Override
+        public void onConnectionFailed(ConnectionResult connectionResult) {
+            Log.d(WearBusTools.BUSWEAR_TAG, "onConnectionFailed");
+        }
+    };
 }
