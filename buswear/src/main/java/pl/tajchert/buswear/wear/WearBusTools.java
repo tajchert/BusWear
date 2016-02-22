@@ -5,10 +5,11 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import org.greenrobot.eventbus.NoSubscriberEvent;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import pl.tajchert.buswear.NoSubscriberEvent;
 
 public class WearBusTools {
     public static final String BUSWEAR_TAG = "BusWearTag";
