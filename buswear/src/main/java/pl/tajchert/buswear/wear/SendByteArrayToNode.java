@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit;
 
 public class SendByteArrayToNode extends Thread {
 
-    private byte[] objectArray;
-    private Context context;
-    private boolean sticky;
-    private Class clazzToSend;
+    private final byte[] objectArray;
+    private final Context context;
+    private final boolean sticky;
+    private final Class clazzToSend;
 
     /**
      * Internal BusWear method, using it outside of library is possible but not supported or tested

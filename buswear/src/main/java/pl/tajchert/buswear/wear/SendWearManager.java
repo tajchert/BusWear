@@ -2,16 +2,17 @@ package pl.tajchert.buswear.wear;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.Wearable;
 
-
 public class SendWearManager {
 
-    public interface OnSendWearConnectionCallback extends GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener { }
+    public interface OnSendWearConnectionCallback extends GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+    }
 
     private static GoogleApiClient mGoogleApiClient;
 
@@ -19,6 +20,7 @@ public class SendWearManager {
      * Set the default OnSendWearConnectionCallback to receive Google Api Client connection
      * callbacks. This must be set before any EventBus methods, usually in the application
      * class.
+     *
      * @param defaultOnSendWearConnectionCallback
      */
     public static void setDefaultOnSendWearConnectionCallback(OnSendWearConnectionCallback defaultOnSendWearConnectionCallback) {
@@ -29,10 +31,10 @@ public class SendWearManager {
      * Internal BusWear method, using it outside of library is not supported or tested.
      * Returns a instance of Google API Client
      */
-    public static GoogleApiClient getInstance (Context context) {
-        if(mGoogleApiClient == null) {
+    public static GoogleApiClient getInstance(Context context) {
+        if (mGoogleApiClient == null) {
 
-            if(context == null) {
+            if (context == null) {
                 return null;
             }
 
@@ -58,7 +60,7 @@ public class SendWearManager {
         }
 
         @Override
-        public void onConnectionFailed(ConnectionResult connectionResult) {
+        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
             Log.d(WearBusTools.BUSWEAR_TAG, "onConnectionFailed");
         }
     };
