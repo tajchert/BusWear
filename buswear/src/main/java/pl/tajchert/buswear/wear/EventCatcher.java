@@ -9,7 +9,7 @@ public class EventCatcher extends WearableListenerService {
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-        WearEventBus.syncEvent(getApplicationContext(), messageEvent);
+        WearEventBus.getDefault(getApplicationContext()).syncEvent(messageEvent);
         super.onMessageReceived(messageEvent);
     }
 
