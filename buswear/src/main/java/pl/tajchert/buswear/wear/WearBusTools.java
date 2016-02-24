@@ -2,6 +2,7 @@ package pl.tajchert.buswear.wear;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.greenrobot.eventbus.NoSubscriberEvent;
@@ -11,26 +12,41 @@ import java.nio.ByteBuffer;
 
 public class WearBusTools {
 
-    public static final String BUSWEAR_TAG = "BusWearTag";
+    public final static String BUSWEAR_TAG = "BusWearTag";
     public final static String MESSAGE_PATH = "pl.tajchert.buswear.event.";
     public final static String MESSAGE_PATH_STICKY = "pl.tajchert.buswear.stickyevent.";
     public final static String MESSAGE_PATH_COMMAND = "pl.tajchert.buswear.command.";
 
     //Commands
     public final static String ACTION_STICKY_CLEAR_ALL = "pl.tajchert.buswear.clearall";
+
     //Other commands to remove object of some class of particular one, are created by adding "class." or "event." dynamically to MESSAGE_PATH_COMMAND
+    public final static String PREFIX_CLASS = "class.";
+    public final static String PREFIX_EVENT = "event.";
+
+    public final static String CLASS_NAME_DELIMITER = "-";
 
     public static final long CONNECTION_TIME_OUT_MS = 100;
 
-    public static byte[] parcelToByte(Parcelable parceable) {
+    /**
+     * Converts the Parcelable object to a byte[]
+     * @param parcelable
+     * @return
+     */
+    public static byte[] parcelToByte(@NonNull Parcelable parcelable) {
         Parcel parcel = Parcel.obtain();
-        parceable.writeToParcel(parcel, 0);
+        parcelable.writeToParcel(parcel, 0);
         byte[] bytes = parcel.marshall();
         parcel.recycle();
         return bytes;
     }
 
-    public static Parcel byteToParcel(byte[] bytes) {
+    /**
+     * Converts the byte[] to a Parcel
+     * @param bytes
+     * @return
+     */
+    public static Parcel byteToParcel(@NonNull byte[] bytes) {
         Parcel parcel = Parcel.obtain();
         parcel.unmarshall(bytes, 0, bytes.length);
         parcel.setDataPosition(0);
@@ -98,17 +114,5 @@ public class WearBusTools {
             throw new RuntimeException("Object needs to be Parcelable or Integer, Long, Float, Double, Short.");
         }
         return objArray;
-    }
-
-    /**
-     * A convenience method that can be used to check if an event fits the size limit of
-     * what can be sent via Google Play Services.
-     *
-     * @param obj
-     * @return true if the object can be sent false if it cannot
-     */
-    public static boolean objectCanBeSent(Object obj) {
-        byte[] objArray = parseToSend(obj);
-        return objArray == null || (objArray.length / 1024) < 100;
     }
 }

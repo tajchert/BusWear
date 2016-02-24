@@ -8,22 +8,20 @@ import android.util.Log;
 
 import com.google.android.gms.wearable.MessageEvent;
 
-import org.greenrobot.eventbus.EventBus;
-
 import java.lang.reflect.Constructor;
 
 /**
- * TODO: Add a class header comment!
+ * An extension of the Greenrobot EventBus that allows syncing events over the Android Wearable API
  */
-public class WearEventBus extends EventBus {
+public class EventBus extends org.greenrobot.eventbus.EventBus {
 
-    private static WearEventBus defaultInstance;
+    private static EventBus defaultInstance;
 
-    public static WearEventBus getDefault(@NonNull Context context) {
+    public static EventBus getDefault(@NonNull Context context) {
         if (defaultInstance == null) {
-            synchronized (EventBus.class) {
+            synchronized (org.greenrobot.eventbus.EventBus.class) {
                 if (defaultInstance == null) {
-                    defaultInstance = new WearEventBus(context);
+                    defaultInstance = new EventBus(context);
                 }
             }
         }
@@ -32,7 +30,7 @@ public class WearEventBus extends EventBus {
 
     private final Context context;
 
-    public WearEventBus(@NonNull Context context) {
+    public EventBus(@NonNull Context context) {
         this.context = context.getApplicationContext();
     }
 
@@ -66,7 +64,7 @@ public class WearEventBus extends EventBus {
      * @return
      */
     public <T> void removeStickyEventRemote(Class<T> eventType) {
-        new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND + "class.", null, eventType, context).start();
+        new SendCommandToNode(WearBusTools.PREFIX_CLASS + WearBusTools.MESSAGE_PATH_COMMAND, null, eventType, context).start();
     }
 
     /**
@@ -77,7 +75,7 @@ public class WearEventBus extends EventBus {
     public void removeStickyEventRemote(Object event) {
         byte[] objectInArray = WearBusTools.parseToSend(event);
         if (objectInArray != null) {
-            new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND + "event.", objectInArray, event.getClass(), context).start();
+            new SendCommandToNode(WearBusTools.PREFIX_EVENT + WearBusTools.MESSAGE_PATH_COMMAND, objectInArray, event.getClass(), context).start();
         }
     }
 
@@ -150,28 +148,13 @@ public class WearEventBus extends EventBus {
     public void syncEvent(@NonNull MessageEvent messageEvent) {
         byte[] objectArray = messageEvent.getData();
 
-        if (messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH)) {
+        int indexClassDelimiter = messageEvent.getPath().lastIndexOf(WearBusTools.CLASS_NAME_DELIMITER);
+        String className = messageEvent.getPath().substring(indexClassDelimiter);
 
-            //TODO cannot take last index of . anymore, fully qualified class names are required
-            String className = messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
+        boolean isEventMessage = messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH) || messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY);
 
-            //Try simple types (String, Integer, Long...)
-            Object obj = WearBusTools.getSendSimpleObject(objectArray, className);
-            if (obj == null) {
-                //Find corresponding parcel for particular object in local receivers
-                obj = findParcel(objectArray, className);
-            }
+        if (isEventMessage) {
 
-            if (obj != null) {
-                //send them to local bus
-                post(obj);
-            }
-
-        } else if (messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY)) {
-
-            //Catch sticky events
-            //TODO cannot take last index of . anymore, fully qualified class names are required
-            String className = messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
             //Try simple types (String, Integer, Long...)
             Object obj = WearBusTools.getSendSimpleObject(objectArray, className);
 
@@ -181,14 +164,21 @@ public class WearEventBus extends EventBus {
             }
 
             if (obj != null) {
+
+                boolean isSticky = messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY);
+
                 //send them to local bus
-                postSticky(obj);
+                if (isSticky) {
+                    postSticky(obj);
+                } else {
+                    post(obj);
+                }
             }
 
         } else if (messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_COMMAND)) {
 
             //Commands used for managing sticky events.
-            stickyEventCommand(context, messageEvent, objectArray);
+            stickyEventCommand(context, messageEvent, objectArray, className);
         }
     }
 
@@ -199,10 +189,7 @@ public class WearEventBus extends EventBus {
      * @param messageEvent
      * @param objectArray
      */
-    private void stickyEventCommand(@NonNull Context context, @NonNull MessageEvent messageEvent, @NonNull byte[] objectArray) {
-
-        //TODO cannot take last index of . anymore, fully qualified class names are required
-        String className = messageEvent.getPath().substring(messageEvent.getPath().lastIndexOf(".") + 1);
+    private void stickyEventCommand(@NonNull Context context, @NonNull MessageEvent messageEvent, @NonNull byte[] objectArray, @NonNull String className) {
 
         if (className.equals(String.class.getName())) {
 
@@ -210,10 +197,12 @@ public class WearEventBus extends EventBus {
             Log.d(WearBusTools.BUSWEAR_TAG, "syncEvent action: " + action);
 
             if (action.equals(WearBusTools.ACTION_STICKY_CLEAR_ALL)) {
+
                 removeAllStickyEvents();
+
             } else {
 
-                //Even if it was String it should be removeStickyEventLocal instead of all, it is due to fact that action key is send as a String.
+                //Even if it was String it should be removeStickyEventLocal instead of all, it is due to fact that action key is sent as a String.
                 Class classTmp = getClassForName(className);
                 removeStickyEvent(classTmp);
 
@@ -221,16 +210,14 @@ public class WearEventBus extends EventBus {
 
         } else {
 
-            //TODO cannot take last index of . anymore, fully qualified class names are required
-            int dotPlace = messageEvent.getPath().lastIndexOf(".");
-            String typeOfRemove = messageEvent.getPath().substring(dotPlace - 5, dotPlace);
-            if (typeOfRemove.equals("class")) {
+            if (messageEvent.getPath().startsWith(WearBusTools.PREFIX_CLASS)) {
 
                 //Call removeStickyEventLocal so first retrieve class that needs to be removed.
                 Class classTmp = getClassForName(className);
                 removeStickyEvent(classTmp);
 
             } else {
+
                 //Call removeStickyEventLocal so first retrieve object that needs to be removed.
                 Object obj = WearBusTools.getSendSimpleObject(objectArray, className);
 
@@ -238,6 +225,7 @@ public class WearEventBus extends EventBus {
                     //Find corresponding parcel for particular object in local receivers
                     obj = findParcel(objectArray, className);
                 }
+
                 if (obj != null) {
                     removeStickyEvent(obj);
                 }
