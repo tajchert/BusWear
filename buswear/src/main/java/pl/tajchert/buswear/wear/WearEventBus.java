@@ -1,4 +1,4 @@
-package org.greenrobot.eventbus;
+package pl.tajchert.buswear.wear;
 
 import android.content.Context;
 import android.os.Parcel;
@@ -8,15 +8,16 @@ import android.util.Log;
 
 import com.google.android.gms.wearable.MessageEvent;
 
-import java.lang.reflect.Constructor;
+import org.greenrobot.eventbus.EventBus;
 
-import pl.tajchert.buswear.wear.SendByteArrayToNode;
-import pl.tajchert.buswear.wear.WearBusTools;
+import java.lang.reflect.Constructor;
 
 /**
  * TODO: Add a class header comment!
  */
 public class WearEventBus extends EventBus {
+
+    private static WearEventBus defaultInstance;
 
     public static WearEventBus getDefault(@NonNull Context context) {
         if (defaultInstance == null) {
@@ -26,7 +27,7 @@ public class WearEventBus extends EventBus {
                 }
             }
         }
-        return (WearEventBus) defaultInstance;
+        return defaultInstance;
     }
 
     private final Context context;
@@ -43,7 +44,7 @@ public class WearEventBus extends EventBus {
      * @param event any kind of Object, no restrictions.
      */
     public void postRemote(Object event) {
-        sendEventOverGooglePlayServices(event);
+        sendEventOverGooglePlayServices(event, false);
         post(event);
     }
 
@@ -53,8 +54,7 @@ public class WearEventBus extends EventBus {
      * @param event any kind of Object, no restrictions.
      */
     public void postStickyRemote(Object event) {
-        //TODO make a sticky send
-        sendEventOverGooglePlayServices(event);
+        sendEventOverGooglePlayServices(event, true);
         postSticky(event);
     }
 
@@ -65,9 +65,8 @@ public class WearEventBus extends EventBus {
      * @param <T>
      * @return
      */
-    public <T> T removeStickyEventRemote(Class<T> eventType) {
-        //TODO remove remote sticky
-        return removeStickyEvent(eventType);
+    public <T> void removeStickyEventRemote(Class<T> eventType) {
+        new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND + "class.", null, eventType, context).start();
     }
 
     /**
@@ -75,17 +74,18 @@ public class WearEventBus extends EventBus {
      *
      * @return true if the events matched and the sticky event was removed.
      */
-    public boolean removeStickyEventRemote(Object event) {
-        //TODO remove remote sticky
-        return removeStickyEvent(event);
+    public void removeStickyEventRemote(Object event) {
+        byte[] objectInArray = WearBusTools.parseToSend(event);
+        if (objectInArray != null) {
+            new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND + "event.", objectInArray, event.getClass(), context).start();
+        }
     }
 
     /**
      * Removes all sticky events, on the remote event bus only
      */
     public void removeAllStickyEventsRemote() {
-        //TODO remove remote sticky
-        removeAllStickyEvents();
+        new SendCommandToNode(WearBusTools.MESSAGE_PATH_COMMAND, WearBusTools.ACTION_STICKY_CLEAR_ALL.getBytes(), String.class, context).start();
     }
 
     /******************** Global Bus Methods ************************/
@@ -96,6 +96,7 @@ public class WearEventBus extends EventBus {
      * @param event any kind of Object, no restrictions.
      */
     public void postGlobal(Object event) {
+        postRemote(event);
         post(event);
     }
 
@@ -105,6 +106,7 @@ public class WearEventBus extends EventBus {
      * @param event any kind of Object, no restrictions.
      */
     public void postStickyGlobal(Object event) {
+        postStickyRemote(event);
         postSticky(event);
     }
 
@@ -116,6 +118,7 @@ public class WearEventBus extends EventBus {
      * @return
      */
     public <T> T removeStickyEventGlobal(Class<T> eventType) {
+        removeStickyEventGlobal(eventType);
         return removeStickyEvent(eventType);
     }
 
@@ -125,6 +128,7 @@ public class WearEventBus extends EventBus {
      * @return true if the events matched and the sticky event was removed.
      */
     public boolean removeStickyEventGlobal(Object event) {
+        removeStickyEventGlobal(event);
         return removeStickyEvent(event);
     }
 
@@ -132,6 +136,7 @@ public class WearEventBus extends EventBus {
      * Removes all sticky events, on local and remote event bus
      */
     public void removeAllStickyEventsGlobal() {
+        removeAllStickyEventsRemote();
         removeAllStickyEvents();
     }
 
@@ -273,13 +278,13 @@ public class WearEventBus extends EventBus {
         }
     }
 
-    private void sendEventOverGooglePlayServices(Object event) {
+    private void sendEventOverGooglePlayServices(Object event, boolean isSticky) {
 
         //Try to parse it for sending and then send it
         byte[] objectInArray = WearBusTools.parseToSend(event);
 
         try {
-            new SendByteArrayToNode(objectInArray, event.getClass(), context, false).start();
+            new SendByteArrayToNode(objectInArray, event.getClass(), context, isSticky).start();
         } catch (Exception e) {
             Log.e(WearBusTools.BUSWEAR_TAG, "Object cannot be sent: " + e.getMessage());
         }
