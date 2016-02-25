@@ -43,7 +43,6 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      */
     public void postRemote(Object event) {
         sendEventOverGooglePlayServices(event, false);
-        post(event);
     }
 
     /**
@@ -53,7 +52,6 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      */
     public void postStickyRemote(Object event) {
         sendEventOverGooglePlayServices(event, true);
-        postSticky(event);
     }
 
     /**
@@ -116,7 +114,7 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      * @return
      */
     public <T> T removeStickyEventGlobal(Class<T> eventType) {
-        removeStickyEventGlobal(eventType);
+        removeStickyEventRemote(eventType);
         return removeStickyEvent(eventType);
     }
 
@@ -126,7 +124,7 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      * @return true if the events matched and the sticky event was removed.
      */
     public boolean removeStickyEventGlobal(Object event) {
-        removeStickyEventGlobal(event);
+        removeStickyEventRemote(event);
         return removeStickyEvent(event);
     }
 
