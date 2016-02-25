@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "21.1.2"
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         applicationId "pl.tajchert.buswear.sample"
@@ -24,5 +24,5 @@ dependencies {
     wearApp project(':wear')
     compile project(':buswear')
     compile 'com.google.android.gms:play-services-wearable:8.4.0'
-    compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.2.0'
 }

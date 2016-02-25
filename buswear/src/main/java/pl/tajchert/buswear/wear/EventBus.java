@@ -234,7 +234,7 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
     }
 
     /**
-     * Searches through the classList to locate the class to instantiate with the given objectArray
+     * Attempts to locate the class specified by className to instantiate with the given objectArray
      *
      * @param objectArray
      * @param className
