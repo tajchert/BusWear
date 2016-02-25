@@ -1,1 +1,1 @@
-include ':buswear'
+include ':mobile', ':wear', ':buswear'

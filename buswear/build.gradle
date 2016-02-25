@@ -16,7 +16,25 @@ android {
     }
 }
 
+configurations {
+    provided {
+        dependencies.all { dep ->
+            configurations.default.exclude group: dep.group, module: dep.name
+        }
+    }
+
+    compile.extendsFrom provided
+}
+
+sourceSets {
+    test {
+        compileClasspath += configurations.provided
+        runtimeClasspath += configurations.provided
+    }
+}
+
 dependencies {
     compile 'org.greenrobot:eventbus:3.0.0'
-    compile 'com.google.android.gms:play-services:8.4.0'
+    provided 'com.google.android.gms:play-services-wearable:8.4.0'
 }
+
