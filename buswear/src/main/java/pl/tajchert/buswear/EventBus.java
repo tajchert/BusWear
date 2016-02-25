@@ -857,7 +857,7 @@ public class EventBus {
                     declaredConstructor.setAccessible(true);
                     return declaredConstructor.newInstance(WearBusTools.byteToParcel(objectArray));
                 } catch (Exception e) {
-                    Log.d(WearBusTools.BUSWEAR_TAG, "syncEvent error: " + e.getMessage());
+                    Log.d(TAG, "syncEvent error: " + e.getMessage());
                 }
             }
         }
