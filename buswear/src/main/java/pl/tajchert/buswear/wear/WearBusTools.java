@@ -30,6 +30,7 @@ public class WearBusTools {
 
     /**
      * Converts the Parcelable object to a byte[]
+     *
      * @param parcelable
      * @return
      */
@@ -43,6 +44,7 @@ public class WearBusTools {
 
     /**
      * Converts the byte[] to a Parcel
+     *
      * @param bytes
      * @return
      */
@@ -59,21 +61,21 @@ public class WearBusTools {
      */
     public static Object getSendSimpleObject(byte[] objectArray, String className) {
         Object obj = null;
-        if (className.equals("String")) {
+        if (className.equals(String.class.getName())) {
             try {
                 obj = new String(objectArray, "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 Log.d(WearBusTools.BUSWEAR_TAG, "syncEvent, cannot unparse event as: " + e.getMessage());
             }
-        } else if (className.equals("Integer")) {
+        } else if (className.equals(Integer.class.getName())) {
             obj = ByteBuffer.wrap(objectArray).getInt();
-        } else if (className.equals("Long")) {
+        } else if (className.equals(Long.class.getName())) {
             obj = ByteBuffer.wrap(objectArray).getLong();
-        } else if (className.equals("Double")) {
+        } else if (className.equals(Double.class.getName())) {
             obj = ByteBuffer.wrap(objectArray).getDouble();
-        } else if (className.equals("Float")) {
+        } else if (className.equals(Float.class.getName())) {
             obj = ByteBuffer.wrap(objectArray).getFloat();
-        } else if (className.equals("Short")) {
+        } else if (className.equals(Short.class.getName())) {
             obj = ByteBuffer.wrap(objectArray).getShort();
         }
         return obj;

@@ -45,7 +45,7 @@ public class SendCommandToNode extends Thread {
             MessageApi.SendMessageResult result;
             result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), path + WearBusTools.CLASS_NAME_DELIMITER + clazzToSend.getName(), objectArray).await();
             if (!result.getStatus().isSuccess()) {
-                Log.v(WearBusTools.BUSWEAR_TAG, "ERROR: failed to send Message via Google Play Services");
+                Log.v(WearBusTools.BUSWEAR_TAG, "ERROR: failed to send Message via Google Play Services to node " + node.getDisplayName());
             }
         }
     }

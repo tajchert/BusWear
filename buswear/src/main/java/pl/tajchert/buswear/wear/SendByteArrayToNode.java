@@ -11,7 +11,6 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.util.concurrent.TimeUnit;
 
-
 public class SendByteArrayToNode extends Thread {
 
     private final byte[] objectArray;
@@ -45,7 +44,7 @@ public class SendByteArrayToNode extends Thread {
                 result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + WearBusTools.CLASS_NAME_DELIMITER + clazzToSend.getName(), objectArray).await();
             }
             if (!result.getStatus().isSuccess()) {
-                Log.v(WearBusTools.BUSWEAR_TAG, "ERROR: failed to send Message via Google Play Services");
+                Log.v(WearBusTools.BUSWEAR_TAG, "ERROR: failed to send Message via Google Play Services to node " + node.getDisplayName());
             }
         }
     }

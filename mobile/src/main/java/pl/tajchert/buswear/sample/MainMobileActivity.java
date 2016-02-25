@@ -25,7 +25,6 @@ public class MainMobileActivity extends AppCompatActivity {
     private Button buttonRemoteRandom;
     private Random rand = new Random();
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

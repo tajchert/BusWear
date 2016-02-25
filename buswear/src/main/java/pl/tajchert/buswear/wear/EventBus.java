@@ -147,7 +147,7 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
         byte[] objectArray = messageEvent.getData();
 
         int indexClassDelimiter = messageEvent.getPath().lastIndexOf(WearBusTools.CLASS_NAME_DELIMITER);
-        String className = messageEvent.getPath().substring(indexClassDelimiter);
+        String className = messageEvent.getPath().substring(indexClassDelimiter + 1);
 
         boolean isEventMessage = messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH) || messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_STICKY);
 
