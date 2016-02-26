@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2015 Michal Tajchert (http://tajchert.pl), Polidea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package pl.tajchert.buswear;
 
 import android.content.Context;
@@ -15,7 +30,14 @@ import pl.tajchert.buswear.wear.SendCommandToNode;
 import pl.tajchert.buswear.wear.WearBusTools;
 
 /**
- * An extension of the Greenrobot EventBus that allows syncing events over the Android Wearable API
+ * EventBus is a central publish/subscribe event system for Android. Events are posted ({@link #post(Object)}) to the
+ * bus, which delivers it to subscribers that have a matching handler method for the event type. To receive events,
+ * subscribers must register themselves to the bus using {@link #register(Object)}. Once registered,
+ * subscribers receive events until {@link #unregister(Object)} is called. By convention, event handling methods must
+ * have the "@Subscribe" annotation, be public, return nothing (void), and have exactly one parameter (the event).
+ *
+ *@author Michal Tajchert, Polidea
+ * Author of EventBus (90% of that code) Markus Junginger, greenrobot
  */
 public class EventBus extends org.greenrobot.eventbus.EventBus {
 
