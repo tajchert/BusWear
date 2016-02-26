@@ -16,7 +16,7 @@ A great multi-purpose tool for Android apps, way of triggering some events in se
 
 ###How to start?
 
-To start with BusWear all you need is to add a dependency. That is it!
+To start with BusWear all you need is to add a dependency and include it in your manifest files.
 
 ###Add BusWear to your project
 
@@ -39,6 +39,15 @@ Maven:
 
 [Maven Central Link](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22pl.tajchert%22%20AND%20a%3A%22buswear%22)
 
+For standard behavior add the following service to both your handheld and wearable manifest files. You can extend EventCatcher to add additional behavior to the EventCatcher.
+
+```xml
+<service android:name="pl.tajchert.buswear.wear.EventCatcher">
+    <intent-filter>
+        <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+    </intent-filter>
+</service>
+```
 
 ###How to use?
 
