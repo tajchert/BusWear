@@ -853,11 +853,9 @@ public class EventBus {
         for (Class classTmp : classList) {
             if (className.equals(classTmp.getSimpleName())) {
                 try {
-                    try {
-                        return classTmp.getConstructor(Parcel.class).newInstance(WearBusTools.byteToParcel(objectArray));
-                    } catch (Exception e) {
-                        Log.d(WearBusTools.BUSWEAR_TAG, "syncEvent error: " + e.getMessage());
-                    }
+                    Constructor declaredConstructor = classTmp.getDeclaredConstructor(Parcel.class);
+                    declaredConstructor.setAccessible(true);
+                    return declaredConstructor.newInstance(WearBusTools.byteToParcel(objectArray));
                 } catch (Exception e) {
                     Log.d(TAG, "syncEvent error: " + e.getMessage());
                 }
