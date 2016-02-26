@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import pl.tajchert.buswear.wear.EventBus;
+import pl.tajchert.buswear.EventBus;
 
 public class MainMobileActivity extends AppCompatActivity {
 

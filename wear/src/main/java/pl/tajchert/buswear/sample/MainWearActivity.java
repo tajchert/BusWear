@@ -9,7 +9,7 @@ import android.widget.Toast;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import pl.tajchert.buswear.wear.EventBus;
+import pl.tajchert.buswear.EventBus;
 
 public class MainWearActivity extends Activity {
 

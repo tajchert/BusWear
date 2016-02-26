@@ -1,4 +1,4 @@
-package pl.tajchert.buswear.wear;
+package pl.tajchert.buswear;
 
 import android.content.Context;
 import android.os.Parcel;
@@ -9,6 +9,10 @@ import android.util.Log;
 import com.google.android.gms.wearable.MessageEvent;
 
 import java.lang.reflect.Constructor;
+
+import pl.tajchert.buswear.wear.SendByteArrayToNode;
+import pl.tajchert.buswear.wear.SendCommandToNode;
+import pl.tajchert.buswear.wear.WearBusTools;
 
 /**
  * An extension of the Greenrobot EventBus that allows syncing events over the Android Wearable API
