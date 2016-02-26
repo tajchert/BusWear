@@ -19,7 +19,7 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
 
     public static EventBus getDefault(@NonNull Context context) {
         if (defaultInstance == null) {
-            synchronized (org.greenrobot.eventbus.EventBus.class) {
+            synchronized (EventBus.class) {
                 if (defaultInstance == null) {
                     defaultInstance = new EventBus(context);
                 }
