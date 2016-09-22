@@ -23,6 +23,9 @@ import android.util.Log;
 
 import com.google.android.gms.wearable.MessageEvent;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.lang.reflect.Constructor;
 
 import pl.tajchert.buswear.wear.SendByteArrayToNode;
@@ -39,7 +42,7 @@ import pl.tajchert.buswear.wear.WearBusTools;
  *@author Michal Tajchert, Polidea
  * Author of EventBus (90% of that code) Markus Junginger, greenrobot
  */
-public class EventBus extends org.greenrobot.eventbus.EventBus {
+public class EventBus {
 
     private static EventBus defaultInstance;
 
@@ -55,9 +58,106 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
     }
 
     private final Context context;
+    private final org.greenrobot.eventbus.EventBus eventBus;
 
     public EventBus(@NonNull Context context) {
+        this(context, org.greenrobot.eventbus.EventBus.getDefault());
+    }
+
+    public EventBus(@NonNull Context context, @NonNull org.greenrobot.eventbus.EventBus eventBus) {
         this.context = context.getApplicationContext();
+        this.eventBus = eventBus;
+    }
+
+    /******************** Greenrobot Proxy Methods ************************/
+
+    /**
+     * Registers the given subscriber to receive events. Subscribers must call {@link #unregister(Object)} once they
+     * are no longer interested in receiving events.
+     * <p/>
+     * Subscribers have event handling methods that must be annotated by {@link Subscribe}.
+     * The {@link Subscribe} annotation also allows configuration like {@link
+     * ThreadMode} and priority.
+     */
+    public void register(Object subscriber) {
+        eventBus.register(subscriber);
+    }
+
+    /** Unregisters the given subscriber from all event classes. */
+    public void unregister(Object subscriber) {
+        eventBus.unregister(subscriber);
+    }
+
+    public boolean isRegistered(Object subscriber) {
+        return eventBus.isRegistered(subscriber);
+    }
+
+    /**
+     * Called from a subscriber's event handling method, further event delivery will be canceled. Subsequent
+     * subscribers
+     * won't receive the event. Events are usually canceled by higher priority subscribers (see
+     * {@link Subscribe#priority()}). Canceling is restricted to event handling methods running in posting thread
+     * {@link ThreadMode#POSTING}.
+     */
+    public void cancelEventDelivery(Object event) {
+        eventBus.cancelEventDelivery(event);
+    }
+
+    /**
+     * Checks if the given event has any subscribers. This will only check the local bus and will not detect
+     * remote subscribers, consider posting remote in that case.
+     * @param eventClass
+     * @return
+     */
+    public boolean hasSubscriberForEvent(Class<?> eventClass) {
+        return eventBus.hasSubscriberForEvent(eventClass);
+    }
+
+    /******************** Local Bus Methods ************************/
+
+    /**
+     * Posts the given event (object) to the local event bus only
+     *
+     * @param event any kind of Object, no restrictions.
+     */
+    public void postLocal(Object event) {
+        eventBus.post(event);
+    }
+
+    /**
+     * Posts the given sticky event (object) to the local event bus only
+     *
+     * @param event any kind of Object, no restrictions.
+     */
+    public void postStickyLocal(Object event) {
+        eventBus.postSticky(event);
+    }
+
+    /**
+     * Remove and gets the recent sticky event for the given event type, on the local event bus only
+     *
+     * @param <T>
+     * @param eventType
+     * @return
+     */
+    public <T> T removeStickyEventLocal(Class<T> eventType) {
+        return eventBus.removeStickyEvent(eventType);
+    }
+
+    /**
+     * Removes the sticky event if it equals to the given event, on the local event bus only
+     *
+     * @return true if the events matched and the sticky event was removed.
+     */
+    public boolean removeStickyEventLocal(Object event) {
+        return eventBus.removeStickyEvent(event);
+    }
+
+    /**
+     * Removes all sticky events, on the local event bus only
+     */
+    public void removeAllStickyEventsLocal() {
+        eventBus.removeAllStickyEvents();
     }
 
     /******************** Remote Bus Methods ************************/
@@ -117,9 +217,9 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      *
      * @param event any kind of Object, no restrictions.
      */
-    public void postGlobal(Object event) {
+    public void post(Object event) {
         postRemote(event);
-        post(event);
+        postLocal(event);
     }
 
     /**
@@ -127,9 +227,9 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      *
      * @param event any kind of Object, no restrictions.
      */
-    public void postStickyGlobal(Object event) {
+    public void postSticky(Object event) {
         postStickyRemote(event);
-        postSticky(event);
+        postStickyLocal(event);
     }
 
     /**
@@ -139,9 +239,9 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      * @param <T>
      * @return
      */
-    public <T> T removeStickyEventGlobal(Class<T> eventType) {
+    public <T> T removeStickyEvent(Class<T> eventType) {
         removeStickyEventRemote(eventType);
-        return removeStickyEvent(eventType);
+        return removeStickyEventLocal(eventType);
     }
 
     /**
@@ -149,17 +249,17 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
      *
      * @return true if the events matched and the sticky event was removed.
      */
-    public boolean removeStickyEventGlobal(Object event) {
+    public boolean removeStickyEvent(Object event) {
         removeStickyEventRemote(event);
-        return removeStickyEvent(event);
+        return removeStickyEventLocal(event);
     }
 
     /**
      * Removes all sticky events, on local and remote event bus
      */
-    public void removeAllStickyEventsGlobal() {
+    public void removeAllStickyEvents() {
         removeAllStickyEventsRemote();
-        removeAllStickyEvents();
+        removeAllStickyEventsLocal();
     }
 
     /******************** Local Bus Synchronization Methods ************************/
@@ -193,27 +293,26 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
 
                 //send them to local bus
                 if (isSticky) {
-                    postSticky(obj);
+                    postStickyLocal(obj);
                 } else {
-                    post(obj);
+                    postLocal(obj);
                 }
             }
 
         } else if (messageEvent.getPath().contains(WearBusTools.MESSAGE_PATH_COMMAND)) {
 
             //Commands used for managing sticky events.
-            stickyEventCommand(context, messageEvent, objectArray, className);
+            stickyEventCommand(messageEvent, objectArray, className);
         }
     }
 
     /**
      * Method used to find which command and if class/object is needed to retrieve it and call local method.
      *
-     * @param context
      * @param messageEvent
      * @param objectArray
      */
-    private void stickyEventCommand(@NonNull Context context, @NonNull MessageEvent messageEvent, @NonNull byte[] objectArray, @NonNull String className) {
+    private void stickyEventCommand(@NonNull MessageEvent messageEvent, @NonNull byte[] objectArray, @NonNull String className) {
 
         if (className.equals(String.class.getName())) {
 
@@ -222,13 +321,13 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
 
             if (action.equals(WearBusTools.ACTION_STICKY_CLEAR_ALL)) {
 
-                removeAllStickyEvents();
+                removeAllStickyEventsLocal();
 
             } else {
 
                 //Even if it was String it should be removeStickyEventLocal instead of all, it is due to fact that action key is sent as a String.
                 Class classTmp = getClassForName(className);
-                removeStickyEvent(classTmp);
+                removeStickyEventLocal(classTmp);
 
             }
 
@@ -238,7 +337,7 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
 
                 //Call removeStickyEventLocal so first retrieve class that needs to be removed.
                 Class classTmp = getClassForName(className);
-                removeStickyEvent(classTmp);
+                removeStickyEventLocal(classTmp);
 
             } else {
 
@@ -251,7 +350,7 @@ public class EventBus extends org.greenrobot.eventbus.EventBus {
                 }
 
                 if (obj != null) {
-                    removeStickyEvent(obj);
+                    removeStickyEventLocal(obj);
                 }
             }
         }

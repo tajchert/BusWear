@@ -50,7 +50,7 @@ public class MainMobileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //Send Custom object to both local and remote EventBus
-                EventBus.getDefault(v.getContext()).postGlobal(new CustomObject(editTextToSend.getText().toString()));
+                EventBus.getDefault(v.getContext()).post(new CustomObject(editTextToSend.getText().toString()));
             }
         });
         buttonLocal.setOnClickListener(new View.OnClickListener() {
@@ -73,7 +73,7 @@ public class MainMobileActivity extends AppCompatActivity {
             public void onClick(View v) {
                 List<Object> messages = Arrays.<Object>asList(editTextToSend.getText().toString(), 1, 1L, 1.0f, 1.0, (short) 1);
                 Object random = messages.get(rand.nextInt(messages.size()));
-                EventBus.getDefault(v.getContext()).postGlobal(random);
+                EventBus.getDefault(v.getContext()).post(random);
             }
         });
     }
@@ -91,5 +91,30 @@ public class MainMobileActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onString(String stringReceived) {
         Toast.makeText(this, "String: " + stringReceived, Toast.LENGTH_SHORT).show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onInteger(Integer integer) {
+        Toast.makeText(this, "Integer: " + integer, Toast.LENGTH_SHORT).show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onFloat(Float aFloat) {
+        Toast.makeText(this, "Float: " + aFloat, Toast.LENGTH_SHORT).show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLong(Long aLong) {
+        Toast.makeText(this, "Long: " + aLong, Toast.LENGTH_SHORT).show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onShort(Short aShort) {
+        Toast.makeText(this, "Short: " + aShort, Toast.LENGTH_SHORT).show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onDouble(Double aDouble) {
+        Toast.makeText(this, "Double: " + aDouble, Toast.LENGTH_SHORT).show();
     }
 }
