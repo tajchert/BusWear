@@ -59,19 +59,19 @@ The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLoca
 To send:
 
 ```java
-EventBus.getDefault().post(parcelableObject);     //Custom parcelable object
-EventBus.getDefault().postRemote("text");         //String
+EventBus.getDefault(this).post(parcelableObject);     //Custom parcelable object
+EventBus.getDefault(this).postRemote("text");         //String
 //... similar with Integer, Long etc.
-EventBus.getDefault().postLocal('c');            //Character - to local function you can pass any object that you like
+EventBus.getDefault(this).postLocal('c');            //Character - to local function you can pass any object that you like
 ```
 
 To receive:
 ```java
 protected void onCreate(Bundle savedInstanceState) {
-    EventBus.getDefault().register(this);
+    EventBus.getDefault(this).register(this);
 }
 
-//Called every time when post() is send (with that particular object), needs to be named "onEvent(ObjectType)"
+//Called every time when post() is sent (with that particular object), needs to be annotated with the `@Subscribe` annotation.
 
 @Subscribe(threadMode = ThreadMode.MAIN)
 public void onMyEvent(ParcelableObject parcelableObject){
