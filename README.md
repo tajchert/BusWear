@@ -45,11 +45,11 @@ Maven:
 You can post to remote branch as long as it `String, Integer, Long, Short, Float, Double` or custom object that `implements Parcelable`, other "non-Parcelable" objects still can be posted but only locally.
 
 
-`post(object, context);` sends your parcelable object (or `String, Integer`...) both to local bus and to remote one as well.
+`post(object);` sends your parcelable object (or `String, Integer`...) both to local bus and to remote one as well.
 
 `postLocal(object)` works as old `post()` of EventBus, it sends event only locally.
 
-`postRemote(object, context)` sends your parcelable object (or `String, Integer`...) to remote bus only.
+`postRemote(object)` sends your parcelable object (or `String, Integer`...) to remote bus only.
 
 The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLocal()`, `postStickyRemote()`. Also methods such `removeStickyEvent(Object)`, `removeStickyEvent(Class)`, `removeAllStickyEvents()` work in same manner - you get everywhere, remote, local flavours of each method.
 
@@ -59,28 +59,31 @@ The same goes for **Sticky events** - so you get `postSticky()`, `postStickyLoca
 To send:
 
 ```java
-EventBus.getDefault().post(parcelableObject, this);     //Custom parcelable object
-EventBus.getDefault().postRemote("text", this);         //String
+EventBus.getDefault(this).post(parcelableObject);     //Custom parcelable object
+EventBus.getDefault(this).postRemote("text");         //String
 //... similar with Integer, Long etc.
-EventBus.getDefault().postLocal('c', this);            //Character - to local function you can pass any object that you like
+EventBus.getDefault(this).postLocal('c');            //Character - to local function you can pass any object that you like
 ```
 
 To receive:
 ```java
 protected void onCreate(Bundle savedInstanceState) {
-    EventBus.getDefault().register(this);
+    EventBus.getDefault(this).register(this);
 }
 
-//Called every time when post() is send (with that particular object), needs to be named "onEvent(ObjectType)"
-public void onEvent(ParcelableObject parcelableObject){
+//Called every time when post() is sent (with that particular object), needs to be annotated with the `@Subscribe` annotation.
+
+@Subscribe(threadMode = ThreadMode.MAIN)
+public void onMyEvent(ParcelableObject parcelableObject){
     //Do your stuff with that object
 }
 
-public void onEvent(String text){
+@Subscribe(threadMode = ThreadMode.MAIN)
+public void onMyOtherEvent(String text){
     //Do your stuff with that object
 }
 
-//... more onEvent() if you want!
+//... more onXEvent() with @Subscribe annotation if you want!
 ```
 
 ###Event propagation
@@ -96,10 +99,6 @@ public void onEvent(String text){
 **How is that better than classic EventBus?**
 
 _EventBus works on mobile na Android Wear - yes, but you got two separate buses, and BusWear gives you a feel of one bus that is shared/synchronized between those two devices._
-
-**Why does it uses whole code of EventBus instead of "extends EventBus"?**
-
-_As it overrides some private methods to get for example subscribed method classes of parameters for unparcelling objects after receiving them in Parcel. If that problem will be resolved I will be glad to use EventBus as dependency._
 
 **What are some drawbacks?**
 

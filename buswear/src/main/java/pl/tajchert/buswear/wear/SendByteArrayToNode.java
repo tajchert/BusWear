@@ -11,12 +11,12 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.util.concurrent.TimeUnit;
 
-
 public class SendByteArrayToNode extends Thread {
-    private byte[] objectArray;
-    private Context context;
-    private boolean sticky;
-    private Class clazzToSend;
+
+    private final byte[] objectArray;
+    private final Context context;
+    private final boolean sticky;
+    private final Class clazzToSend;
 
     /**
      * Internal BusWear method, using it outside of library is possible but not supported or tested
@@ -39,12 +39,12 @@ public class SendByteArrayToNode extends Thread {
         for (Node node : nodes.getNodes()) {
             MessageApi.SendMessageResult result;
             if (sticky) {
-                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + clazzToSend.getSimpleName(), objectArray).await();
+                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH_STICKY + WearBusTools.CLASS_NAME_DELIMITER + clazzToSend.getName(), objectArray).await();
             } else {
-                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + clazzToSend.getSimpleName(), objectArray).await();
+                result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), WearBusTools.MESSAGE_PATH + WearBusTools.CLASS_NAME_DELIMITER + clazzToSend.getName(), objectArray).await();
             }
             if (!result.getStatus().isSuccess()) {
-                Log.v(WearBusTools.BUSWEAR_TAG, "ERROR: failed to send Message via Google Play Services");
+                Log.v(WearBusTools.BUSWEAR_TAG, "ERROR: failed to send Message via Google Play Services to node " + node.getDisplayName());
             }
         }
     }

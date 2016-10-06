@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 
 public class CustomObject implements Parcelable {
+
     private String name;
 
     public CustomObject(String name) {
@@ -29,7 +30,7 @@ public class CustomObject implements Parcelable {
         dest.writeString(name);
     }
 
-    public CustomObject(Parcel in){
+    public CustomObject(Parcel in) {
         this.name = in.readString();
     }
 
@@ -39,4 +40,16 @@ public class CustomObject implements Parcelable {
                 "name='" + name + '\'' +
                 '}';
     }
+
+    public static final Creator<CustomObject> CREATOR = new Creator<CustomObject>() {
+        @Override
+        public CustomObject createFromParcel(Parcel in) {
+            return new CustomObject(in);
+        }
+
+        @Override
+        public CustomObject[] newArray(int size) {
+            return new CustomObject[size];
+        }
+    };
 }
