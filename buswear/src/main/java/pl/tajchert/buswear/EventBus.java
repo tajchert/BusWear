@@ -50,7 +50,7 @@ public class EventBus {
         if (defaultInstance == null) {
             synchronized (EventBus.class) {
                 if (defaultInstance == null) {
-                    defaultInstance = new EventBus(context);
+                    defaultInstance = new EventBus(context.getApplicationContext());
                 }
             }
         }
@@ -158,6 +158,15 @@ public class EventBus {
      */
     public void removeAllStickyEventsLocal() {
         eventBus.removeAllStickyEvents();
+    }
+
+    /**
+     * Gets the most recent sticky event for the given type, on the local event bus only
+     *
+     * @see #postSticky(Object)
+     */
+    public <T> T getStickyEventLocal(Class<T> eventType) {
+        return eventBus.getStickyEvent(eventType);
     }
 
     /******************** Remote Bus Methods ************************/

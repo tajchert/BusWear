@@ -57,7 +57,7 @@ public class MainMobileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //Send Custom object only to local EventBus
-                EventBus.getDefault(v.getContext()).post(new CustomObject(editTextToSend.getText().toString()));
+                EventBus.getDefault(v.getContext()).postLocal(new CustomObject(editTextToSend.getText().toString()));
             }
         });
         buttonRemote.setOnClickListener(new View.OnClickListener() {

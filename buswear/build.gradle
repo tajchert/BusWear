@@ -35,6 +35,6 @@ sourceSets {
 
 dependencies {
     compile 'org.greenrobot:eventbus:3.0.0'
-    provided 'com.google.android.gms:play-services-wearable:9.0.2'
+    provided 'com.google.android.gms:play-services-wearable:9.6.1'
 }
 
