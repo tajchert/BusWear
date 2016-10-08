@@ -1,7 +1,7 @@
 BusWear - EventBus for Android Wear
 =======
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/pl.tajchert/buswear/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/pl.tajchert/buswear)
+[![](https://jitpack.io/v/tajchert/BusWear.svg)](https://jitpack.io/#tajchert/BusWear)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-BusWear-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/1336)
 
 ![BusWear logo](https://raw.githubusercontent.com/tajchert/BusWear/master/mobile/src/main/res/drawable-xxxhdpi/ic_launcher.png)
@@ -23,21 +23,20 @@ To start with BusWear all you need is to add a dependency. That is it!
 Gradle:
 ```gradle
     //library:
-    compile 'pl.tajchert:buswear:0.9.5'
+	compile 'com.github.tajchert:BusWear:0.9.6'
     //needed dependency:
     compile 'com.google.android.gms:play-services-wearable:+'
 ```
 
-Maven:
-```xml
-<dependency>
-    <groupId>pl.tajchert</groupId>
-    <artifactId>buswear</artifactId>
-    <version>0.9.5</version>
-</dependency>
+Root build.gradle (due to Jitpack.io):
+```gradle
+	allprojects {
+		repositories {
+			...
+			maven { url "https://jitpack.io" }
+		}
+	}
 ```
-
-[Maven Central Link](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22pl.tajchert%22%20AND%20a%3A%22buswear%22)
 
 
 ###How to use?
